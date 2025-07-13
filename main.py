@@ -5,6 +5,8 @@ from behavior.settings import *
 from behavior.utils.audio_controller import MusicManager
 from behavior.utils.save_data import Data
 from behavior.gui.guiEngine import GUI
+from behavior.gui.fontEngine import render_text_with_border
+from behavior.gui.guiToast import Toast
 
 # Initialize pygame
 pygame.init()
@@ -29,28 +31,36 @@ class PiMemoryGame:
         self.high_score = 0
         self.musicManager = MusicManager() #Manages the music
         self.milestones = {
-            10: "You reached the first 10 digits of Pi!",
-            50: "Half-way to 100 digits!",
-            100: "Amazing! 100 digits memorized!",
-            500: "500 memorized! can you reach 1000?",
-            1000: "Wild! you have 1000 digits memorized!"
-        }
-        self.achievements = [] #list of player achievements
+            1: {"title": "First steps", "description": "You reached the first 10 digits of Pi!"},
+            50: {"title": "Semicentennial", "description": "Half-way to the first 100 digits"},
+            100: {"title": "Triple digits", "description": "Amazing! 100 digits memorized!"},
+            500: {"title": "500 club", "description": "500 memorized! can you reach 1000?"},
+            1000: {"title": "Pi Millennium", "description": "Wild! you have 1000 digits memorized!"}
+        } #the key is the condition for the achievment
         self.animated_seq = ""
         self.animation_index = 0
         self.char_display_interval = 0.2  # seconds between characters
         self.last_char_time = time.time()
         self.data = Data()
-
+        self.achievements = self.data.data["achievements"] #list of player achievements
         #GUI stuff
+        self.toasts = []  # toast notifications
         self.mainGui = GUI(surface=screen)
 
     def restart_game(self):
-        print("hi")
+        self.score = 0
+        self.animated_seq = ""
+        self.animation_index = 0
+        self.user_input = ""
+        self.message = ""
+        self.state = "show"
+        self.cur_index = 0
+        self.last_char_time = time.time()
+        self.data.load_data()
 
     def build_gui(self):
         self.mainGui.create_btn(
-            pos=(10, 10),
+            pos=(WIDTH//2 - 60 //2, 60 + HEIGHT//2),
             width = 60,
             height = 60,
             text = "Restart",
@@ -65,8 +75,17 @@ class PiMemoryGame:
     def get_current_sequence(self):
         return ''.join(self.pi_digits[:self.cur_index + 1])
     
-    def toast_notification(self):
-        pass
+    def post_achievement(self, achievement: dict):
+        self.achievements.append(achievement)
+        self.toasts.append(Toast(achievement["title"], achievement["description"]))
+
+    def check_achievement(self):
+        if self.score in self.milestones:
+            # Check if we've already added this achievement
+            if not any(a.get("score") == self.score for a in self.achievements):
+                achievement = self.milestones[self.score]
+                achievement["score"] = self.score  # Tag the score for tracking
+                self.post_achievement(achievement)
 
     def update(self):
         now = time.time()
@@ -97,9 +116,19 @@ class PiMemoryGame:
                 self.score += 1
 
             elif not self.get_current_sequence().startswith(self.user_input):
-                self.message = "Wrong! Game Over."
+                self.message = "Game Over"
                 self.state = "gameover"
-                self.data.save_score(score=self.score)
+                new_data = {
+                        "score": self.score, 
+                        "achievements": self.achievements
+                }
+                self.data.save_data(input_data=new_data)
+
+            #Check if player has reached an achievement
+            self.check_achievement()
+
+            # Clean up expired toasts
+            self.toasts = [t for t in self.toasts if not t.is_expired()]
 
         elif self.state == "wait":
             if now - self.last_switch_time > 1:
@@ -127,28 +156,37 @@ class PiMemoryGame:
         screen.fill(BG_COLOR)
 
         if self.state == "show" or self.state == "input":
-            score_text = INPUT_FONT.render(f"Score: {self.score}", True, TEXT_COLOR)
-            screen.blit(score_text, (10, 10))
+            score_text_surf = render_text_with_border(f"Score: {self.score}", INPUT_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+            screen.blit(score_text_surf, (10, 10))
 
         # Show message or sequence
         if self.state == "show":
-            text = FONT.render(self.animated_seq, True, TEXT_COLOR)
-            screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 3))
-            msg = INPUT_FONT.render("Memorize the sequence!", True, TEXT_COLOR)
-            screen.blit(msg, (WIDTH // 2 - msg.get_width() // 2, HEIGHT // 2))
+            text_surf = render_text_with_border(self.animated_seq, FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+            screen.blit(text_surf, (WIDTH // 2 - text_surf.get_width() // 2, HEIGHT // 3))
+
+            msg_surf = render_text_with_border("Memorize the sequence!", INPUT_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+            screen.blit(msg_surf, (WIDTH // 2 - msg_surf.get_width() // 2, HEIGHT // 2))
+
         elif self.state == "input":
-            input_text = FONT.render(self.user_input, True, TEXT_COLOR)
-            screen.blit(input_text, (WIDTH // 2 - input_text.get_width() // 2, HEIGHT // 3))
-            prompt = INPUT_FONT.render("Type the full sequence:", True, TEXT_COLOR)
-            screen.blit(prompt, (WIDTH // 2 - prompt.get_width() // 2, HEIGHT // 2))
+            input_surf = render_text_with_border(self.user_input, INPUT_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+            screen.blit(input_surf, (WIDTH // 2 - input_surf.get_width() // 2, (HEIGHT // 3)))
+
+            prompt_surf = render_text_with_border("Type the full sequence", INPUT_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+            screen.blit(prompt_surf, (WIDTH // 2 - prompt_surf.get_width() // 2, HEIGHT // 2))
         else:
-            end_text = FONT.render(self.message, True, SUCCESS_COLOR if "Correct" in self.message or "Congrats" in self.message else ERROR_COLOR)
-            screen.blit(end_text, (WIDTH // 2 - end_text.get_width() // 2, HEIGHT // 3))
-            score_text = INPUT_FONT.render(f"Score: {self.score}", True, TEXT_COLOR)
-            screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2))
+            msg_surf = render_text_with_border(self.message, FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+            screen.blit(msg_surf, (WIDTH // 2 - msg_surf.get_width() // 2, (HEIGHT // 3)))
+            score_surf = render_text_with_border(f"Score: {self.score}", INPUT_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+            screen.blit(score_surf, (WIDTH // 2 - score_surf.get_width() // 2, (HEIGHT // 3)+60))
 
         #Update gui's
-        self.mainGui.update()
+        if self.state == "gameover":
+            self.mainGui.update()
+
+        # Draw active toasts
+        for i, toast in enumerate(self.toasts):
+            toast.draw(screen, i, len(self.toasts))
+
         pygame.display.flip()
 
     def play_audio(self):
@@ -159,7 +197,6 @@ class PiMemoryGame:
 def main():
     clock = pygame.time.Clock()
     game = PiMemoryGame()
-    game.data.load_data()
     game.build_gui()
 
     while True:
