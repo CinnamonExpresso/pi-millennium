@@ -1,7 +1,3 @@
-# Changeable
-SOUND_VOLUME = 100
-MUSIC_ENABLED = True
-
 # Constants
 WIDTH, HEIGHT = 800, 600
 BG_COLOR = (30, 30, 30)

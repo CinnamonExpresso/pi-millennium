@@ -31,8 +31,6 @@ def update_timers(timers:dict):
         timer.update()
     return new_timers
 
-
-
 #Exit the entire program
 def quit_game():
     quit()

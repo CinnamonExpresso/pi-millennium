@@ -13,6 +13,8 @@ settings = {
         "fps_cap": 60
     },
     "audio": {
+        "music_enabled": True,
+        "sound_enabled": True,
         "music_vol": 1.0,
         "sound_vol": 1.0
     }

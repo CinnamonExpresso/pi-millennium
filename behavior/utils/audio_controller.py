@@ -1,7 +1,7 @@
 # randomize sounds
 from random import randint
 import pygame
-from behavior.settings import SOUND_VOLUME
+import data.globalvars as globalvars
 from behavior.utils.timer import Timer
 
 
@@ -35,7 +35,7 @@ class AudioManger:
     # Volume: 0.0 (mute) to 1.0 (full volume)
     def set_volume(self, sound_name, volume):
         if sound_name in self.sounds:
-            self.sounds[sound_name].set_volume(volume * (SOUND_VOLUME / 100))
+            self.sounds[sound_name].set_volume(volume * (100 / 100))
 
 
 # Manage music tracks
