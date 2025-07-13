@@ -13,7 +13,7 @@ class AudioManger:
     def play(self, sound_name):
         if sound_name in self.sounds:
             self.sounds[sound_name].play()
-            self.is_playing = True
+            self.is_playing = False
         else:
             raise Exception(f"Sound '{sound_name}' not found!")
 
@@ -56,7 +56,8 @@ class SoundManager(AudioManger):
         super().__init__()
         pygame.mixer.init()
         self.sounds = {
-            "select": pygame.mixer.Sound("resources/audio/sound/select.mp3"),
+            "new_high_score": pygame.mixer.Sound("resources/audio/sound/new_high_score.wav"),
+            "achievement": pygame.mixer.Sound("resources/audio/sound/achievement.wav"),
         }
 
     def play_randomize_sound(self, path: str, limit: int) -> str:
