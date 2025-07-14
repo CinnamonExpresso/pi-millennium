@@ -19,7 +19,7 @@ INPUT_FONT = pygame.font.SysFont("consolas", 36)
 SUB_FONT = pygame.font.SysFont("consolas", 26)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Pi Memory Game")
+pygame.display.set_caption("Pi Millennium")
 
 """
 TODO:
@@ -27,6 +27,7 @@ TODO:
 -Maybe some graphical changes
 -Optimize code
 -Translate to c++ and compile to web-asymebly
+-Add difficulty toggle
 """
 
 class PiMemoryGame:
@@ -42,18 +43,22 @@ class PiMemoryGame:
         self.musicManager = MusicManager() #Manages the music
         self.soundManager = SoundManager()
         self.milestones = {
-            10: {"title": "First steps", "description": "You reached the first 10 digits of Pi!"},
-            50: {"title": "Semicentennial", "description": "Half-way to the first 100 digits"},
-            100: {"title": "Triple digits", "description": "Amazing! 100 digits memorized!"},
-            500: {"title": "500 club", "description": "500 memorized! can you reach 1000?"},
-            1000: {"title": "Pi Millennium", "description": "Wild! you have 1000 digits memorized!"}
-        } #the key is the condition for the achievment
+            "digits": {
+                10: {"title": "First steps", "description": "You reached the first 10 digits of Pi!"},
+                50: {"title": "Semicentennial", "description": "Half way to the first 100 digits"},
+                100: {"title": "Triple digits", "description": "Amazing! 100 digits memorized!"},
+                500: {"title": "500 club", "description": "500 memorized! can you reach 1000?"},
+                1000: {"title": "Pi Millennium", "description": "Wild! you have 1000 digits memorized!"}
+            },
+            "misc": {
+                1: {"title": "High Achiever", "description": "You beat your high score for the first time."}
+            }
+        } #the sub-key is the condition for the achievment
         self.animated_seq = ""
         self.animation_index = 0
         self.char_display_interval = 0.2  # seconds between characters
         self.last_char_time = time.time()
         self.data = Data()
-        self.achievements = self.data.data["achievements"] #list of player achievements
         self.high_score = self.data.data["high_score"]
 
         self.paused_at = None #used to keep track for how long the game was paused
@@ -87,19 +92,31 @@ class PiMemoryGame:
         return ''.join(self.pi_digits[:self.cur_index + 1])
     
     def post_achievement(self, achievement: dict):
-        self.achievements.append(achievement)
+        globalvars.achievements.append(achievement)
         self.toasts.append(Toast(achievement["title"], achievement["description"]))
         self.soundManager.play("achievement")
 
-    def check_achievement(self):
-        if self.score in self.milestones:
+    def check_achievement(self, flag:list=None):
+        if self.score in self.milestones["digits"]:
             # Check if we've already added this achievement
-            if not any(a.get("score") == self.score for a in self.achievements):
-                achievement = self.milestones[self.score]
-                achievement["score"] = self.score  # Tag the score for tracking
+            if not any(a.get("tag") == self.score for a in globalvars.achievements):
+                achievement = self.milestones["digits"][self.score]
+                achievement["tag"] = self.score  # Tag the score for tracking
                 self.post_achievement(achievement)
+        #Other achievements
+        if flag and flag[0] == "other":
+            if flag[1] == "highscore":
+                if not any(a.get("tag") == "1m" for a in globalvars.achievements):
+                    achievement = self.milestones["misc"][1]
+                    achievement["tag"] = "1m"  # Tag the score for tracking
+                    self.post_achievement(achievement)
 
     def update(self):
+        # Play audio
+        self.play_audio()
+        #Check highscore
+        self.check_highscore()
+
         if globalvars.game_speed != 0:
             self.now = time.time()
 
@@ -147,7 +164,7 @@ class PiMemoryGame:
                 self.state = "gameover"
                 new_data = {
                     "score": self.score,
-                    "achievements": self.achievements
+                    "achievements": globalvars.achievements
                 }
                 self.data.save_data(input_data=new_data)
 
@@ -164,8 +181,6 @@ class PiMemoryGame:
                     self.state = "show"
                     self.last_switch_time = self.now
 
-        # Play audio
-        self.play_audio()
         # Clean up expired toasts
         self.toasts = [t for t in self.toasts if not t.is_expired()]
 
@@ -245,6 +260,8 @@ class PiMemoryGame:
             self.visuals.settingsGui.update()
         elif  globalvars.menu_state["credits"]:
             self.visuals.creditsGui.update()
+        elif  globalvars.menu_state["achievements"]:
+            self.visuals.achievementsGui.update()
         elif  globalvars.menu_state["mainMenu"]:
             self.visuals.mainMenuGui.update()
 
@@ -254,23 +271,7 @@ class PiMemoryGame:
 
         pygame.display.flip()
 
-    def play_audio(self):
-        if globalvars.settings["audio"]["music_enabled"] and self.musicManager.is_playing == False:
-            self.musicManager.play_loop(sound_name="main")
-        
-        #Set volumnes
-        self.musicManager.set_volume("main", globalvars.settings["audio"]["music_vol"])
-        self.soundManager.set_volume("main", globalvars.settings["audio"]["sound_vol"])
-        
-        #Check settings
-        if globalvars.settings["audio"]["music_vol"] > 0.1:
-            globalvars.settings["audio"]["music_enabled"] == False
-        if globalvars.settings["audio"]["sound_vol"] > 0.1:
-            globalvars.settings["audio"]["sound_enabled"] == False
-
-        if globalvars.settings["audio"]["music_enabled"] == False:
-            self.musicManager.stop("main")
-
+    def check_highscore(self):
         #Check if player surpassed their highscore
         if self.score > self.high_score and self.soundManager.is_playing == False and not self.flags["high_score_reached"]:
             if globalvars.settings["audio"]["sound_enabled"]:
@@ -279,9 +280,29 @@ class PiMemoryGame:
             self.flags["high_score_reached"] = True
             self.toasts.append(Toast("New High-Score!", "You reached a new high score!"))
 
+            self.check_achievement(flag=["other", "highscore"])
+
+    def play_audio(self):
+        if globalvars.settings["audio"]["music_enabled"] and self.musicManager.is_playing == False:
+            self.musicManager.play_loop(sound_name="main")
+        
+        #Check settings
+        if globalvars.settings["audio"]["music_vol"] < 0.025:
+            globalvars.settings["audio"]["music_enabled"] == False
+        if globalvars.settings["audio"]["sound_vol"] < 0.025:
+            globalvars.settings["audio"]["sound_enabled"] == False
+
+        if globalvars.settings["audio"]["music_enabled"] == False:
+            self.musicManager.stop("main")
+
+        #Set volumnes
+        self.musicManager.set_volume("main", globalvars.settings["audio"]["music_vol"])
+        self.soundManager.set_volume("main", globalvars.settings["audio"]["sound_vol"])
+
 def main():
     clock = pygame.time.Clock()
     game = PiMemoryGame()
+    globalvars.achievements = game.data.data["achievements"] #load saved achievement data
     game.visuals.build_gui()
 
     while True:
@@ -294,7 +315,6 @@ def main():
         game.update()
         game.draw()
         clock.tick(60)
-        print(globalvars.flags)
 
 if __name__ == "__main__":
     main()

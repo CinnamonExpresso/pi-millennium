@@ -24,7 +24,8 @@ menu_state = { #Used for tracking which menu is open
     "pause": False,
     "credits": False,
     "mainMenu": True,
-    "settings": False
+    "settings": False,
+    "achievements": False
 }
 
 flags = {
@@ -36,10 +37,13 @@ cool_down = {
     "inputCooldownUntil": 0  # milliseconds
 }
 
-pause_states = [menu_state["pause"], menu_state["credits"], menu_state["mainMenu"], menu_state["settings"]] #menus that "pause the game"
+pause_states = [menu_state["pause"], menu_state["credits"], menu_state["mainMenu"], menu_state["settings"], menu_state["achievements"]] #menus that "pause the game"
 
 #ints
 game_speed:int = 1 #Game speed 0 = Paused, 1 = normal, 2 = x2 speed, 3 = x3 speed
+
+#lists
+achievements = [] #list of player achievements
 
 #Floats
 dt = 1 / 60

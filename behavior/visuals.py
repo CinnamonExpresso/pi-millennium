@@ -8,32 +8,43 @@ class Visuals:
     def __init__(self, screen, btn_cmds):
         self.btn_cmds = btn_cmds
         self.surface = screen
+        self.achievement_titles_lst = []
 
         #build guis
         self.mainGui = GUI(surface=screen) #Gui used on gameover screen
         self.settingsGui = FullMenu(surface=self.surface, menu_header="Settings", menu_state_type="settings", bg_overlay=False, tabs_enabled=True) #gui when player clicks settings
-        self.pauseGui = FullMenu(surface=self.surface, menu_header="Pi Memory", menu_state_type="pause", bg_overlay=False) #gui when player presses escape
-        self.mainMenuGui = FullMenu(surface=self.surface, menu_header="Pi Memory", menu_state_type="main", bg_overlay=False) #Main menu when player starts the game
+        self.pauseGui = FullMenu(surface=self.surface, menu_header="Pi Millennium", menu_state_type="pause", bg_overlay=False) #gui when player presses escape
+        self.mainMenuGui = FullMenu(surface=self.surface, menu_header="Pi Millennium", menu_state_type="main", bg_overlay=False) #Main menu when player starts the game
         self.creditsGui = FullMenu(surface=self.surface, menu_header="Credits", menu_state_type="credits", bg_overlay=False)
+        self.achievementsGui = FullMenu(surface=self.surface, menu_header="Achievements", menu_state_type="achievements", bg_overlay=False)
 
         #Build rects
         self.mainMenuGui.create_menu_rects("center")
         self.pauseGui.create_menu_rects("center")
         self.creditsGui.create_menu_rects("center")
+        self.achievementsGui.create_menu_rects("center")
         self.settingsGui.create_menu_rects("top")
-
+    # Just to handle the back button double click issue
     def back_btn(self):
         reset_menu_state()
         globalvars.menu_state["mainMenu"] = True
         # Set cooldown for 50ms
-        globalvars.cool_down["inputCooldownUntil"] = time.get_ticks() + 50
+        globalvars.cool_down["inputCooldownUntil"] = time.get_ticks() + 80
 
+    # Start the game from the main menu gui
     def start_btn(self):
         globalvars.flags["main"] = False
         self.mainMenuGui.close_menu()
         self.btn_cmds["restart_game"]
+
+    def achievement_titles(self):
+        for achievement in globalvars.achievements:
+            print(achievement)
+            self.achievement_titles_lst.append(achievement["title"])
         
     def build_gui(self):
+        self.achievement_titles()
+        print(self.achievement_titles_lst)
         #Main menu gui
         self.mainMenuGui.create_btn(
             pos=((WIDTH//2) - (480//2),  self.mainMenuGui.menu_rect.top + 80),
@@ -55,7 +66,7 @@ class Visuals:
             hover_color = COLORS["GRAY"],
             text_color = COLORS["BLACK"],
             border_color=COLORS["BLACK"],
-            funct=self.mainMenuGui.open_menu
+            funct=self.achievementsGui.open_menu
         )
         self.mainMenuGui.create_btn(
             pos=(self.mainMenuGui.btn_list[1].pos[0]+250,  self.mainMenuGui.btn_list[0].pos[1] + 70),
@@ -89,6 +100,113 @@ class Visuals:
             text_color = COLORS["BLACK"],
             border_color=COLORS["BLACK"],
             funct=quit_game
+        )
+        #--Achievements gui
+        #--row 1
+        self.achievementsGui.create_text(
+            pos = (20,  self.achievementsGui.menu_rect.top + 90),
+            text_content = "First steps",
+            text_color = (COLORS["WHITE"] if "First steps" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=32
+        )
+        self.achievementsGui.create_text(
+            pos = (20,  self.achievementsGui.txt_list[0].text_pos[1] + 30),
+            text_content = "Reach the first 10 digits of Pi",
+            text_color = (COLORS["WHITE"] if "First steps" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=26
+        )
+
+        self.achievementsGui.create_text(
+            pos = (180,  self.achievementsGui.txt_list[0].text_pos[1]),
+            text_content = "Semicentennial",
+            text_color = (COLORS["WHITE"] if "Semicentennial" in self.achievement_titles_lst else COLORS["GRAY"]),
+            align="right",
+            font_name=None,
+            font_size=32
+        )
+        self.achievementsGui.create_text(
+            pos = (self.achievementsGui.txt_list[2].text_pos[0],  self.achievementsGui.txt_list[0].text_pos[1] + 30),
+            text_content = "half way to the first 100 digits",
+            text_color = (COLORS["WHITE"] if "Semicentennial" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=26
+        )
+        #--row 2
+        self.achievementsGui.create_text(
+            pos = (20,  self.achievementsGui.txt_list[1].text_pos[1] + 30),
+            text_content = "Triple digits",
+            text_color = (COLORS["WHITE"] if "Triple digits" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=32
+        )
+        self.achievementsGui.create_text(
+            pos = (20,  self.achievementsGui.txt_list[4].text_pos[1] + 30),
+            text_content = "reach 100 digits of pi",
+            text_color = (COLORS["WHITE"] if "Triple digits" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=26
+        )
+
+        self.achievementsGui.create_text(
+            pos = (260,  self.achievementsGui.txt_list[3].text_pos[1] + 30),
+            text_content = "500 club",
+            text_color = (COLORS["WHITE"] if "500 club" in self.achievement_titles_lst else COLORS["GRAY"]),
+            align="right",
+            font_name=None,
+            font_size=32
+        )
+        self.achievementsGui.create_text(
+            pos = (self.achievementsGui.txt_list[2].text_pos[0],  self.achievementsGui.txt_list[4].text_pos[1] + 30),
+            text_content = "reach 500 digits of pi",
+            text_color = (COLORS["WHITE"] if "500 club" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=26
+        )
+
+        #--row 3
+        self.achievementsGui.create_text(
+            pos = (20,  self.achievementsGui.txt_list[5].text_pos[1] + 30),
+            text_content = "Pi Millennium",
+            text_color = (COLORS["WHITE"] if "Pi Millennium" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=32
+        )
+        self.achievementsGui.create_text(
+            pos = (self.achievementsGui.txt_list[0].text_pos[0],  self.achievementsGui.txt_list[8].text_pos[1] + 30),
+            text_content = "Reach 1000 digits (thus beating the game)",
+            text_color = (COLORS["WHITE"] if "Pi Millennium" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=26
+        )
+
+        self.achievementsGui.create_text(
+            pos = (200,  self.achievementsGui.txt_list[8].text_pos[1]),
+            text_content = "High Achiever",
+            text_color = (COLORS["WHITE"] if "High Achiever" in self.achievement_titles_lst else COLORS["GRAY"]),
+            align="right",
+            font_name=None,
+            font_size=32
+        )
+        self.achievementsGui.create_text(
+            pos = (self.achievementsGui.txt_list[10].text_pos[0],  self.achievementsGui.txt_list[9].text_pos[1]),
+            text_content = "Beat your high score for the first time",
+            text_color = (COLORS["WHITE"] if "500 club" in self.achievement_titles_lst else COLORS["GRAY"]),
+            font_name=None,
+            font_size=26
+        )
+        #--Bottom btn
+        self.achievementsGui.create_btn(
+            pos=((WIDTH//2) - (480//2),  self.achievementsGui.txt_list[9].text_pos[1] + 90),
+            width = 480,
+            height = 60,
+            text = "Back",
+            color = COLORS["WHITE"],
+            hover_color = COLORS["GRAY"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=(self.back_btn if globalvars.flags["main"] else self.pauseGui.open_menu)
         )
 
         #--Credits gui

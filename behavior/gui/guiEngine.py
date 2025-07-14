@@ -40,11 +40,21 @@ class GuiText:
         self.font_size = font_size
         self.font = pygame.font.SysFont(font_name, font_size)
         self.font_name = font_name
-        self.text_attr=text_attr #tuple for paring checkboxes, sliders, etc with text. index 0: type, index 1: the corrasponding index where type is located
+        self.text_attr=text_attr #tuple for pairing checkboxes, sliders, etc with text. index 0: type, index 1: the corrasponding index where type is located
 
-    def create_text(self):
+    def create_text(self, align:str="center"):
         self.text_surf = self.font.render(self.text_content, True, self.text_color)
-        self.text_rect = self.text_surf.get_rect(center=self.text_pos)
+        if align == "right":
+            text_width = self.text_surf.get_width()
+            new_pos = list(self.text_pos)
+            new_pos[0] = WIDTH - text_width - new_pos[0]
+            self.text_pos = (new_pos[0], new_pos[1])
+        elif align == "left":
+            self.text_rect = self.text_surf.get_rect()
+            self.text_rect.topleft = self.text_pos
+        else:
+            self.text_rect = self.text_surf.get_rect()
+            self.text_rect.center = self.text_pos
 
     #Changes font
     def change_font(self, font_size:int, font_name:bool|str=None):
@@ -441,9 +451,9 @@ class GUI:
         self.tab_content[tab_content_id][type] = new_content_lst
 
     #create text
-    def create_text(self, pos, text_content, font_name, text_color=(0,0,0,1), font_size=42, is_tab_content:bool=False, tab_content_id:int=0, text_attr:tuple[str,int]=None):
+    def create_text(self, pos, text_content, font_name, text_color=(0,0,0,1), font_size=42, is_tab_content:bool=False, tab_content_id:int=0, text_attr:tuple[str,int]=None, align:str="center"):
         new_text = GuiText(pos=pos, text_content=text_content, text_color=text_color, font_size=font_size, font_name=font_name, text_attr=text_attr)
-        new_text.create_text()
+        new_text.create_text(align=align)
         
         if is_tab_content and self.tabs_enabled: #IF this is tab content
             if text_attr:

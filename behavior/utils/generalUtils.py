@@ -40,7 +40,6 @@ def quit_game():
 def change_game_speed(speed=1):
     if any([globalvars.menu_state["pause"], globalvars.menu_state["credits"], globalvars.menu_state["mainMenu"], globalvars.menu_state["settings"]]):
         globalvars.game_speed = 0
-        print("NOw")
         return
     elif not globalvars.menu_state["pause"]:
         globalvars.game_speed = speed
