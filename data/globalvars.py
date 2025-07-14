@@ -29,7 +29,11 @@ menu_state = { #Used for tracking which menu is open
 
 flags = {
     "main": True, #Credits/settings menu accessed from main
-    "pause": False, #Credits/settings menu accessed from pause
+    "pause": False #Credits/settings menu accessed from pause
+}
+
+cool_down = {
+    "inputCooldownUntil": 0  # milliseconds
 }
 
 pause_states = [menu_state["pause"], menu_state["credits"], menu_state["mainMenu"], menu_state["settings"]] #menus that "pause the game"

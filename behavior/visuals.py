@@ -1,7 +1,8 @@
 from behavior.gui.guiEngine import GUI, FullMenu
 from behavior.settings import *
-from behavior.utils.generalUtils import quit_game
+from behavior.utils.generalUtils import quit_game, reset_menu_state
 import data.globalvars as globalvars
+from pygame import time
 
 class Visuals:
     def __init__(self, screen, btn_cmds):
@@ -21,6 +22,17 @@ class Visuals:
         self.creditsGui.create_menu_rects("center")
         self.settingsGui.create_menu_rects("top")
 
+    def back_btn(self):
+        reset_menu_state()
+        globalvars.menu_state["mainMenu"] = True
+        # Set cooldown for 50ms
+        globalvars.cool_down["inputCooldownUntil"] = time.get_ticks() + 50
+
+    def start_btn(self):
+        globalvars.flags["main"] = False
+        self.mainMenuGui.close_menu()
+        self.btn_cmds["restart_game"]
+        
     def build_gui(self):
         #Main menu gui
         self.mainMenuGui.create_btn(
@@ -32,7 +44,7 @@ class Visuals:
             hover_color = COLORS["GRAY"],
             text_color = COLORS["BLACK"],
             border_color=COLORS["BLACK"],
-            funct=self.mainMenuGui.close_menu
+            funct=self.start_btn
         )
         self.mainMenuGui.create_btn(
             pos=(self.mainMenuGui.btn_list[0].pos[0],  self.mainMenuGui.btn_list[0].pos[1] + 70),
@@ -89,7 +101,7 @@ class Visuals:
             hover_color = COLORS["GRAY"],
             text_color = COLORS["BLACK"],
             border_color=COLORS["BLACK"],
-            funct=(self.mainMenuGui.open_menu if globalvars.flags["main"] else self.pauseGui.open_menu)
+            funct=(self.back_btn if globalvars.flags["main"] else self.pauseGui.open_menu)
         )
         self.creditsGui.create_text(
             pos = ((self.creditsGui.menu_rect.centerx)//2,  self.creditsGui.menu_rect.top + 60),

@@ -169,6 +169,14 @@ class PiMemoryGame:
         # Clean up expired toasts
         self.toasts = [t for t in self.toasts if not t.is_expired()]
 
+    # A function just to handle that weird double click bug with the buttons
+    def handle_input(self):
+        current_time = pygame.time.get_ticks()
+        # If still on cooldown, block input
+        if current_time < globalvars.cool_down["inputCooldownUntil"]:
+            return True  # Input is blocked (still in cooldown)
+        return False  # Input is allowed
+
     #Handles controls
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -180,6 +188,7 @@ class PiMemoryGame:
                         globalvars.menu_state["mainMenu"] = True
                     update_pause_states()
                     change_game_speed()
+
         if not any(state for state in globalvars.pause_states) and self.state == "input" and event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:
                 self.user_input = self.user_input[:-1]
@@ -192,8 +201,10 @@ class PiMemoryGame:
             
     def draw(self):
         screen.fill(BG_COLOR)
+        if self.handle_input():
+            return
 
-        if not any(state for state in globalvars.pause_states):
+        if not any(state for state in globalvars.pause_states) and not globalvars.flags["main"]:
             if self.state == "show" or self.state == "input":
                 globalvars.flags["main"] = False
 
@@ -236,8 +247,6 @@ class PiMemoryGame:
             self.visuals.creditsGui.update()
         elif  globalvars.menu_state["mainMenu"]:
             self.visuals.mainMenuGui.update()
-            globalvars.flags["pause"] = False
-            globalvars.flags["main"] = True
 
         # Draw active toasts
         for i, toast in enumerate(self.toasts):
@@ -285,6 +294,7 @@ def main():
         game.update()
         game.draw()
         clock.tick(60)
+        print(globalvars.flags)
 
 if __name__ == "__main__":
     main()
