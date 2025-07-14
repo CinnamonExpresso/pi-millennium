@@ -28,6 +28,7 @@ TODO:
 -Optimize code
 -Translate to c++ and compile to web-asymebly
 -Add difficulty toggle
+-Add elapsed time
 """
 
 class PiMemoryGame:
@@ -60,6 +61,12 @@ class PiMemoryGame:
         self.last_char_time = time.time()
         self.data = Data()
         self.high_score = self.data.data["high_score"]
+        self.elasped_time = {
+            "sec": 0,
+            "min": 0,
+            "hour": 0
+        }
+        self.elasped_time_txt = f"{self.elasped_time["hour"]}:{self.elasped_time["min"]}:{self.elasped_time["sec"]}"
 
         self.paused_at = None #used to keep track for how long the game was paused
         self.total_paused_duration = 0
@@ -121,20 +128,20 @@ class PiMemoryGame:
             self.now = time.time()
 
         # If game is paused
-        if any(state for state in globalvars.pause_states):
+        if any(state for state in globalvars.pause_states) and not globalvars.flags["main"]:
             # Mark when the game was paused
             if self.paused_at is None:
                 self.paused_at = self.now
             return  # Don't proceed with game logic during pause
 
         # Game just resumed
-        if self.paused_at is not None:
+        if self.paused_at is not None and not globalvars.flags["main"]:
             pause_duration = self.now - self.paused_at
             self.last_char_time += pause_duration
             self.last_switch_time += pause_duration
             self.paused_at = None
 
-        if self.state == "show":
+        if self.state == "show" and not globalvars.flags["main"]:
             full_seq = self.get_current_sequence()
 
             # Animate one character at a time
@@ -152,7 +159,7 @@ class PiMemoryGame:
                     self.animation_index = 0
                     self.last_switch_time = self.now
 
-        elif self.state == "input":
+        elif self.state == "input" and not globalvars.flags["main"]:
             if self.user_input == self.get_current_sequence():
                 self.message = "Correct!"
                 self.state = "wait"
@@ -228,6 +235,9 @@ class PiMemoryGame:
 
                 high_score_text_surf = render_text_with_border(f"High-Score: {self.high_score}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
                 screen.blit(high_score_text_surf, (10, score_text_surf.get_height() + 10))
+
+                elasped_time_text_surf = render_text_with_border(self.elasped_time_txt, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                screen.blit(elasped_time_text_surf, (WIDTH - 90, 10))
 
             # Show message or sequence
             if self.state == "show":
@@ -323,6 +333,7 @@ def main():
         game.update()
         game.draw()
         clock.tick(60)
+        print(globalvars.flags)
 
         if globalvars.settings["general"]["debug_mode"] and not timers["debug_stat_update"].active:
             update_debug_stats("FPS", round(clock.get_fps()), game.visuals.rebuild_debug_gui)

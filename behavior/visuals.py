@@ -24,7 +24,7 @@ class Visuals:
         self.creditsGui.create_menu_rects("center")
         self.achievementsGui.create_menu_rects("center")
         self.settingsGui.create_menu_rects("top")
-        
+
     # Just to handle the back button double click issue
     def back_btn(self):
         reset_menu_state()
@@ -62,7 +62,7 @@ class Visuals:
             pos=((WIDTH//2) - (480//2),  self.mainMenuGui.menu_rect.top + 80),
             width = 480,
             height = 60,
-            text = "Resume",
+            text = "Start",
             color = COLORS["WHITE"],
             hover_color = COLORS["GRAY"],
             text_color = COLORS["BLACK"],
