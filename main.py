@@ -27,7 +27,6 @@ TODO:
 -Maybe some graphical changes
 -Optimize code
 -Translate to c++ and compile to web-asymebly
--Finish difficulty toggle
 -Add a reset game button
 """
 
@@ -350,6 +349,16 @@ def main():
 
         if any(timer.active for timer in timers.values()):
             timers = update_timers(timers)
+
+        if globalvars.flags["difficulty_change"]:
+            if globalvars.difficulty == 0: #easy
+                game.char_display_interval = 0.2
+            elif globalvars.difficulty == 1:
+                game.char_display_interval = 0.1
+            else:
+                game.char_display_interval = 0
+            
+            globalvars.flags["difficulty_change"] = False
                                    
 if __name__ == "__main__":
     main()

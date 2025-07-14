@@ -36,6 +36,11 @@ def quit_game():
     quit()
     exit()
 
+#change game difficulty
+def change_difficulty():
+    globalvars.difficulty = (globalvars.difficulty + 1) % 3
+    globalvars.flags["difficulty_change"] = True
+
 #changes game speed
 def change_game_speed(speed=1):
     if any([globalvars.menu_state["pause"], globalvars.menu_state["credits"], globalvars.menu_state["mainMenu"], globalvars.menu_state["settings"]]):

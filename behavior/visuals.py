@@ -1,6 +1,6 @@
 from behavior.gui.guiEngine import GUI, FullMenu
 from behavior.settings import *
-from behavior.utils.generalUtils import quit_game, reset_menu_state
+from behavior.utils.generalUtils import quit_game, reset_menu_state, change_difficulty
 import data.globalvars as globalvars
 from pygame import time
 
@@ -320,9 +320,10 @@ class Visuals:
             pos=(self.settingsGui.tab_content[0]["text"][1].text_pos[0],  self.settingsGui.tab_content[0]["text"][1].text_pos[1]),
             options=["Easy", "Normal", "Hard"],
             select_val_main="difficulty",
-            def_index=1,
+            def_index=globalvars.difficulty,
             tab_content_id=0,
-            is_tab_content=True
+            is_tab_content=True,
+            callback_fn=change_difficulty
         )
 
         #----Audio

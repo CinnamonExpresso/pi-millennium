@@ -196,12 +196,12 @@ class GuiSlider:
         self.draw()
         self.handle_event()
 
-#Selection box
+#Selection box, user can click the box to cycle through different options
 class GuiSelectionBox:
-    def __init__(self, pos, surface, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None):
+    def __init__(self, pos, surface, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, callback_fn=None):
         self.pos = pos
         self.surface = surface
-        self.options = options
+        self.options = options #List of selection options Ex: ["easy", "medium", "hard"]
         self.size = size
         self.select_val_main = select_val_main
         self.select_val_sub = select_val_sub
@@ -209,13 +209,14 @@ class GuiSelectionBox:
         self.box_color = box_color
         self.border_color = border_color
         self.border_width = border_width
-        self.current_index = def_index
+        self.current_index = def_index #represents the starting options
         self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
         self.font = font or pygame.font.SysFont(None, 32)
         self.update_selected_value()
         self.timers = {
-            "selection_cooldown": Timer(duration=100)
+            "selection_cooldown": Timer(duration=100) #prevent spam, can be adjust obv
         }
+        self.callback_fn = callback_fn #Call back function that executes when a change in state occurs
 
     def update_selected_value(self):
         selected_value = self.options[self.current_index]
@@ -240,6 +241,9 @@ class GuiSelectionBox:
         self.current_index = (self.current_index + 1) % len(self.options)
         self.update_selected_value()
         self.timers["selection_cooldown"].activate()
+
+        if self.callback_fn:
+            self.callback_fn()
 
     def update(self):
         self.draw()
@@ -509,7 +513,7 @@ class GUI:
 
         self.tab_content[tab_content_id][type] = new_content_lst
 
-    def create_selectionbox(self, pos, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, is_tab_content:bool=False, tab_content_id:int=0):
+    def create_selectionbox(self, pos, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, is_tab_content:bool=False, tab_content_id:int=0, callback_fn=None):
         selection_box = GuiSelectionBox(
             pos=pos,
             surface=self.surface,  # Pygame surface
@@ -522,7 +526,8 @@ class GUI:
             box_color=box_color,
             border_color=border_color,
             border_width=border_width,
-            font=font
+            font=font,
+            callback_fn=callback_fn
         )
 
         if is_tab_content and self.tabs_enabled: #IF this is tab content

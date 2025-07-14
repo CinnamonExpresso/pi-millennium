@@ -30,7 +30,8 @@ menu_state = { #Used for tracking which menu is open
 
 flags = {
     "main": True, #Credits/settings menu accessed from main
-    "pause": False #Credits/settings menu accessed from pause
+    "pause": False, #Credits/settings menu accessed from pause
+    "difficulty_change": False #Checks if the difficulty has been changed recently
 }
 
 cool_down = {
@@ -41,6 +42,7 @@ pause_states = [menu_state["pause"], menu_state["credits"], menu_state["mainMenu
 
 #ints
 game_speed:int = 1 #Game speed 0 = Paused, 1 = normal, 2 = x2 speed, 3 = x3 speed
+difficulty = 0 #0 = easy, 1 = medium, 2 = hard
 
 #lists
 achievements = [] #list of player achievements
