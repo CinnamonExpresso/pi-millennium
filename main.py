@@ -9,7 +9,7 @@ from behavior.gui.guiToast import Toast
 from behavior.visuals import Visuals
 import data.globalvars as globalvars
 from behavior.utils.generalUtils import reset_menu_state, update_pause_states, change_game_speed, update_debug_stats, update_timers
-from behavior.utils.timer import Timer
+from behavior.utils.timer import Timer, StopWatchTimer
 
 # Initialize pygame
 pygame.init()
@@ -28,7 +28,6 @@ TODO:
 -Optimize code
 -Translate to c++ and compile to web-asymebly
 -Add difficulty toggle
--Add elapsed time
 """
 
 class PiMemoryGame:
@@ -61,13 +60,6 @@ class PiMemoryGame:
         self.last_char_time = time.time()
         self.data = Data()
         self.high_score = self.data.data["high_score"]
-        self.elasped_time = {
-            "sec": 0,
-            "min": 0,
-            "hour": 0
-        }
-        self.elasped_time_txt = f"{self.elasped_time["hour"]}:{self.elasped_time["min"]}:{self.elasped_time["sec"]}"
-
         self.paused_at = None #used to keep track for how long the game was paused
         self.total_paused_duration = 0
         
@@ -79,6 +71,8 @@ class PiMemoryGame:
         #GUI stuff
         self.toasts = []  # toast notifications
         self.visuals = Visuals(screen=screen, btn_cmds={"restart_game": self.restart_game})
+        self.stopwatch = StopWatchTimer()
+        self.elasped_time_txt = self.stopwatch.update()
 
     def restart_game(self):
         self.score = 0
@@ -129,6 +123,7 @@ class PiMemoryGame:
 
         # If game is paused
         if any(state for state in globalvars.pause_states) and not globalvars.flags["main"]:
+            self.stopwatch.pause()
             # Mark when the game was paused
             if self.paused_at is None:
                 self.paused_at = self.now
@@ -140,6 +135,13 @@ class PiMemoryGame:
             self.last_char_time += pause_duration
             self.last_switch_time += pause_duration
             self.paused_at = None
+            self.stopwatch.resume()
+
+        #update stopwatch
+        if ((self.state == "show" or self.state == "input") and 
+        not globalvars.flags["main"] and 
+        not any(state for state in globalvars.pause_states)):
+            self.elasped_time_txt = self.stopwatch.update()
 
         if self.state == "show" and not globalvars.flags["main"]:
             full_seq = self.get_current_sequence()
@@ -237,7 +239,7 @@ class PiMemoryGame:
                 screen.blit(high_score_text_surf, (10, score_text_surf.get_height() + 10))
 
                 elasped_time_text_surf = render_text_with_border(self.elasped_time_txt, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(elasped_time_text_surf, (WIDTH - 90, 10))
+                screen.blit(elasped_time_text_surf, (WIDTH - 120, 10))
 
             # Show message or sequence
             if self.state == "show":
@@ -333,7 +335,6 @@ def main():
         game.update()
         game.draw()
         clock.tick(60)
-        print(globalvars.flags)
 
         if globalvars.settings["general"]["debug_mode"] and not timers["debug_stat_update"].active:
             update_debug_stats("FPS", round(clock.get_fps()), game.visuals.rebuild_debug_gui)
