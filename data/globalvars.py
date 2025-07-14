@@ -23,11 +23,16 @@ settings = {
 menu_state = { #Used for tracking which menu is open
     "pause": False,
     "credits": False,
-    "stats": False,
+    "mainMenu": True,
     "settings": False
 }
 
-pause_states = [menu_state["pause"], menu_state["credits"], menu_state["stats"], menu_state["settings"]] #menus that "pause the game"
+flags = {
+    "main": True, #Credits/settings menu accessed from main
+    "pause": False, #Credits/settings menu accessed from pause
+}
+
+pause_states = [menu_state["pause"], menu_state["credits"], menu_state["mainMenu"], menu_state["settings"]] #menus that "pause the game"
 
 #ints
 game_speed:int = 1 #Game speed 0 = Paused, 1 = normal, 2 = x2 speed, 3 = x3 speed

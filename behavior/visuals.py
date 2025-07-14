@@ -9,22 +9,117 @@ class Visuals:
         self.surface = screen
 
         #build guis
-        self.mainGui = GUI(surface=screen)
-        self.settingsGui = FullMenu(surface=self.surface, menu_header="Settings", menu_state_type="settings", bg_overlay=True, tabs_enabled=True)
-        self.pauseGui = FullMenu(surface=self.surface, menu_header="Pi Counter", menu_state_type="pause", bg_overlay=True)
+        self.mainGui = GUI(surface=screen) #Gui used on gameover screen
+        self.settingsGui = FullMenu(surface=self.surface, menu_header="Settings", menu_state_type="settings", bg_overlay=False, tabs_enabled=True) #gui when player clicks settings
+        self.pauseGui = FullMenu(surface=self.surface, menu_header="Pi Memory", menu_state_type="pause", bg_overlay=False) #gui when player presses escape
+        self.mainMenuGui = FullMenu(surface=self.surface, menu_header="Pi Memory", menu_state_type="main", bg_overlay=False) #Main menu when player starts the game
+        self.creditsGui = FullMenu(surface=self.surface, menu_header="Credits", menu_state_type="credits", bg_overlay=False)
 
         #Build rects
+        self.mainMenuGui.create_menu_rects("center")
         self.pauseGui.create_menu_rects("center")
+        self.creditsGui.create_menu_rects("center")
         self.settingsGui.create_menu_rects("top")
 
     def build_gui(self):
+        #Main menu gui
+        self.mainMenuGui.create_btn(
+            pos=((WIDTH//2) - (480//2),  self.mainMenuGui.menu_rect.top + 80),
+            width = 480,
+            height = 60,
+            text = "Resume",
+            color = COLORS["WHITE"],
+            hover_color = COLORS["GRAY"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=self.mainMenuGui.close_menu
+        )
+        self.mainMenuGui.create_btn(
+            pos=(self.mainMenuGui.btn_list[0].pos[0],  self.mainMenuGui.btn_list[0].pos[1] + 70),
+            width = 230,
+            height = 60,
+            text = "Achievements",
+            color = COLORS["WHITE"],
+            hover_color = COLORS["GRAY"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=self.mainMenuGui.open_menu
+        )
+        self.mainMenuGui.create_btn(
+            pos=(self.mainMenuGui.btn_list[1].pos[0]+250,  self.mainMenuGui.btn_list[0].pos[1] + 70),
+            width = 230,
+            height = 60,
+            text = "Credits",
+            color = COLORS["WHITE"],
+            hover_color = COLORS["GRAY"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=self.creditsGui.open_menu
+        )
+        self.mainMenuGui.create_btn(
+            pos=(self.mainMenuGui.btn_list[0].pos[0],  self.mainMenuGui.btn_list[1].pos[1] + 70),
+            width = 480,
+            height = 60,
+            text = "Settings",
+            color = COLORS["WHITE"],
+            hover_color = COLORS["GRAY"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=self.settingsGui.open_menu
+        )
+        self.mainMenuGui.create_btn(
+            pos=(self.mainMenuGui.btn_list[0].pos[0],  self.mainMenuGui.btn_list[3].pos[1] + 70),
+            width = 480,
+            height = 60,
+            text = "Quit",
+            color = COLORS["WHITE"],
+            hover_color = COLORS["GRAY"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=quit_game
+        )
+
+        #--Credits gui
+        self.creditsGui.create_btn(
+            pos=((WIDTH//2) - (480//2),  self.creditsGui.menu_rect.top + 220),
+            width = 480,
+            height = 60,
+            text = "Back",
+            color = COLORS["WHITE"],
+            hover_color = COLORS["GRAY"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=(self.mainMenuGui.open_menu if globalvars.flags["main"] else self.pauseGui.open_menu)
+        )
+        self.creditsGui.create_text(
+            pos = ((self.creditsGui.menu_rect.centerx)//2,  self.creditsGui.menu_rect.top + 60),
+            text_content = "Developer: pumped.dev",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32
+        )
+        self.creditsGui.create_text(
+            pos = (self.creditsGui.txt_list[0].text_pos[0],  self.creditsGui.txt_list[0].text_pos[1] + 60),
+            text_content = "Textures: FreePik",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32
+        )
+        self.creditsGui.create_text(
+            pos = (self.creditsGui.txt_list[0].text_pos[0],  self.creditsGui.txt_list[1].text_pos[1] + 60),
+            text_content = "Music: No Place To Go - pixabay",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32
+        )
+
         #Settings gui
         #--create tabs
         self.settingsGui.add_tabs(["General", "Audio"])
         #--content 1
         self.settingsGui.create_btn(
             pos=(20,  self.settingsGui.menu_rect.top + 60),
-            width = 230,
+            width = (WIDTH//2) - 20,
             height = 60,
             text = "General",
             color = COLORS["WHITE"],
@@ -36,8 +131,8 @@ class Visuals:
             funct_args=0
         )
         self.settingsGui.create_btn(
-            pos=((self.settingsGui.btn_list[0].pos[0] + 240),  self.settingsGui.menu_rect.top + 60),
-            width = 230,
+            pos=((WIDTH // 2),  self.settingsGui.menu_rect.top + 60),
+            width = (WIDTH//2) - 20,
             height = 60,
             text = "Audio",
             color = COLORS["WHITE"],
@@ -166,7 +261,7 @@ class Visuals:
         )
 
         self.pauseGui.create_btn(
-            pos=((self.pauseGui.menu_rect.centerx)//2,  self.pauseGui.menu_rect.top + 80),
+            pos=((WIDTH//2) - (480//2),  self.pauseGui.menu_rect.top + 80),
             width = 480,
             height = 60,
             text = "Resume",
@@ -191,7 +286,7 @@ class Visuals:
             pos=(self.pauseGui.btn_list[0].pos[0],  self.pauseGui.btn_list[1].pos[1] + 70),
             width = 480,
             height = 60,
-            text = "Exit",
+            text = "Quit",
             color = COLORS["WHITE"],
             hover_color = COLORS["GRAY"],
             text_color = COLORS["BLACK"],

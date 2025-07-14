@@ -8,7 +8,7 @@ from behavior.gui.fontEngine import render_text_with_border
 from behavior.gui.guiToast import Toast
 from behavior.visuals import Visuals
 import data.globalvars as globalvars
-from behavior.utils.generalUtils import reset_menu_state, update_pause_states
+from behavior.utils.generalUtils import reset_menu_state, update_pause_states, change_game_speed
 
 # Initialize pygame
 pygame.init()
@@ -20,6 +20,14 @@ SUB_FONT = pygame.font.SysFont("consolas", 26)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pi Memory Game")
+
+"""
+TODO:
+-Add debug stuff
+-Maybe some graphical changes
+-Optimize code
+-Translate to c++ and compile to web-asymebly
+"""
 
 class PiMemoryGame:
     def __init__(self):
@@ -47,6 +55,9 @@ class PiMemoryGame:
         self.data = Data()
         self.achievements = self.data.data["achievements"] #list of player achievements
         self.high_score = self.data.data["high_score"]
+
+        self.paused_at = None #used to keep track for how long the game was paused
+        self.total_paused_duration = 0
         
         #Flags
         self.flags = {
@@ -89,79 +100,103 @@ class PiMemoryGame:
                 self.post_achievement(achievement)
 
     def update(self):
-        now = time.time()
-        if not any(state for state in globalvars.pause_states):
-            if self.state == "show":
-                full_seq = self.get_current_sequence()
+        if globalvars.game_speed != 0:
+            self.now = time.time()
 
-                # Animate one character at a time
-                if self.animation_index < len(full_seq):
-                    if now - self.last_char_time >= self.char_display_interval:
-                        self.animated_seq += full_seq[self.animation_index]
-                        self.animation_index += 1
-                        self.last_char_time = now
-                else:
-                    # Once animation is done, switch to input mode after delay
-                    if now - self.last_char_time > 1:  # pause after full sequence is shown
-                        self.state = "input"
-                        self.user_input = ""
-                        self.animated_seq = ""
-                        self.animation_index = 0
-                        self.last_switch_time = now
+        # If game is paused
+        if any(state for state in globalvars.pause_states):
+            # Mark when the game was paused
+            if self.paused_at is None:
+                self.paused_at = self.now
+            return  # Don't proceed with game logic during pause
 
-            elif self.state == "input":
-                if self.user_input == self.get_current_sequence():
-                    self.message = "Correct!"
-                    self.state = "wait"
-                    self.last_switch_time = now
-                    self.score += 1
+        # Game just resumed
+        if self.paused_at is not None:
+            pause_duration = self.now - self.paused_at
+            self.last_char_time += pause_duration
+            self.last_switch_time += pause_duration
+            self.paused_at = None
 
-                elif not self.get_current_sequence().startswith(self.user_input):
-                    self.message = "Game Over"
+        if self.state == "show":
+            full_seq = self.get_current_sequence()
+
+            # Animate one character at a time
+            if self.animation_index < len(full_seq):
+                if self.now - self.last_char_time >= self.char_display_interval:
+                    self.animated_seq += full_seq[self.animation_index]
+                    self.animation_index += 1
+                    self.last_char_time = self.now
+            else:
+                # Once animation is done, switch to input mode after delay
+                if self.now - self.last_char_time > 1:
+                    self.state = "input"
+                    self.user_input = ""
+                    self.animated_seq = ""
+                    self.animation_index = 0
+                    self.last_switch_time = self.now
+
+        elif self.state == "input":
+            if self.user_input == self.get_current_sequence():
+                self.message = "Correct!"
+                self.state = "wait"
+                self.last_switch_time = self.now
+                self.score += 1
+
+            elif not self.get_current_sequence().startswith(self.user_input):
+                self.message = "Game Over"
+                self.state = "gameover"
+                new_data = {
+                    "score": self.score,
+                    "achievements": self.achievements
+                }
+                self.data.save_data(input_data=new_data)
+
+            # Check for achievements
+            self.check_achievement()
+
+        elif self.state == "wait":
+            if self.now - self.last_switch_time > 1:
+                self.cur_index += 1
+                if self.cur_index >= len(self.pi_digits):
+                    self.message = "You completed all digits! Congrats!"
                     self.state = "gameover"
-                    new_data = {
-                            "score": self.score, 
-                            "achievements": self.achievements
-                    }
-                    self.data.save_data(input_data=new_data)
+                else:
+                    self.state = "show"
+                    self.last_switch_time = self.now
 
-                #Check if player has reached an achievement
-                self.check_achievement()
-
-            elif self.state == "wait":
-                if now - self.last_switch_time > 1:
-                    self.cur_index += 1
-                    if self.cur_index >= len(self.pi_digits):
-                        self.message = "You completed all digits! Congrats!"
-                        self.state = "gameover"
-                    else:
-                        self.state = "show"
-                        self.last_switch_time = now
-        #Play audio
+        # Play audio
         self.play_audio()
         # Clean up expired toasts
         self.toasts = [t for t in self.toasts if not t.is_expired()]
 
+    #Handles controls
     def handle_event(self, event):
-        if self.state == "input" and event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE: #pause the game
+                    reset_menu_state()
+                    if not globalvars.flags["main"]:
+                        globalvars.menu_state["pause"] = not globalvars.menu_state["pause"]
+                    else:
+                        globalvars.menu_state["mainMenu"] = True
+                    update_pause_states()
+                    change_game_speed()
+        if not any(state for state in globalvars.pause_states) and self.state == "input" and event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:
                 self.user_input = self.user_input[:-1]
             elif event.key == pygame.K_RETURN:
                 pass  # ignore enter
             elif event.key == pygame.K_ESCAPE:
-                reset_menu_state()
-                globalvars.menu_state["pause"] = not globalvars.menu_state["pause"]
-                update_pause_states()
-
-                print(globalvars.menu_state["pause"])
+                pass  # ignore enter
             elif event.unicode:
                 self.user_input += event.unicode
-
+            
     def draw(self):
         screen.fill(BG_COLOR)
 
         if not any(state for state in globalvars.pause_states):
             if self.state == "show" or self.state == "input":
+                globalvars.flags["main"] = False
+
                 score_text_surf = render_text_with_border(f"Score: {self.score}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
                 screen.blit(score_text_surf, (10, 10))
 
@@ -193,8 +228,16 @@ class PiMemoryGame:
                 self.visuals.mainGui.update()
         elif  globalvars.menu_state["pause"]:
             self.visuals.pauseGui.update()
+            globalvars.flags["pause"] = True
+            globalvars.flags["main"] = False
         elif globalvars.menu_state["settings"]:
             self.visuals.settingsGui.update()
+        elif  globalvars.menu_state["credits"]:
+            self.visuals.creditsGui.update()
+        elif  globalvars.menu_state["mainMenu"]:
+            self.visuals.mainMenuGui.update()
+            globalvars.flags["pause"] = False
+            globalvars.flags["main"] = True
 
         # Draw active toasts
         for i, toast in enumerate(self.toasts):

@@ -4,14 +4,14 @@ from sys import exit
 
 #Updates pause states to new values
 def update_pause_states():
-    globalvars.pause_states = [globalvars.menu_state["pause"], globalvars.menu_state["credits"], globalvars.menu_state["stats"], globalvars.menu_state["settings"]]
+    globalvars.pause_states = [globalvars.menu_state["pause"], globalvars.menu_state["credits"], globalvars.menu_state["mainMenu"], globalvars.menu_state["settings"]]
 
 #Resets all menu states to False
 def reset_menu_state():
     if any(globalvars.menu_state.values()):
         for btn in globalvars.menu_state:
             globalvars.menu_state[btn] = False
-            
+
     update_pause_states()
 
 #Update stats on globalvars
@@ -38,8 +38,9 @@ def quit_game():
 
 #changes game speed
 def change_game_speed(speed=1):
-    if any([globalvars.menu_state["pause"], globalvars.menu_state["credits"], globalvars.menu_state["stats"], globalvars.menu_state["settings"]]):
+    if any([globalvars.menu_state["pause"], globalvars.menu_state["credits"], globalvars.menu_state["mainMenu"], globalvars.menu_state["settings"]]):
         globalvars.game_speed = 0
+        print("NOw")
         return
     elif not globalvars.menu_state["pause"]:
         globalvars.game_speed = speed
