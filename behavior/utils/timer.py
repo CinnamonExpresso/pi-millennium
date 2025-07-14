@@ -43,6 +43,16 @@ class StopWatchTimer:
             "hour": 0
         }
 
+    def reset(self):
+        self.start_time = time.time()
+        self.total_paused_duration = 0
+        self.paused_at = None
+        self.elapsed_time = {
+            "sec": 0,
+            "min": 0,
+            "hour": 0
+        }
+
     def pause(self):
         if self.paused_at is None:
             self.paused_at = time.time()

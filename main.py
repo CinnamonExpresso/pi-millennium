@@ -88,6 +88,7 @@ class PiMemoryGame:
         self.flags = {
             "high_score_reached": False
         }
+        self.stopwatch.reset()
 
     def get_current_sequence(self):
         return ''.join(self.pi_digits[:self.cur_index + 1])
@@ -259,7 +260,13 @@ class PiMemoryGame:
                 msg_surf = render_text_with_border(self.message, FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
                 screen.blit(msg_surf, (WIDTH // 2 - msg_surf.get_width() // 2, (HEIGHT // 3)))
                 score_surf = render_text_with_border(f"Score: {self.score}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(score_surf, (WIDTH // 2 - score_surf.get_width() // 2, (HEIGHT // 3)+60))
+
+                if self.state == "gameover":
+                    elasped_time_text_surf = render_text_with_border(f"Time: {self.elasped_time_txt}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(elasped_time_text_surf, ((WIDTH // 2 - elasped_time_text_surf.get_width() // 2), (HEIGHT // 3)+90))
+                    screen.blit(score_surf, ((WIDTH // 2 - elasped_time_text_surf.get_width() // 2), (HEIGHT // 3)+60))
+                else:
+                    screen.blit(score_surf, (WIDTH // 2 - score_surf.get_width() // 2, (HEIGHT // 3)+60))
 
             #Update gui's
             if self.state == "gameover":
