@@ -27,7 +27,8 @@ TODO:
 -Maybe some graphical changes
 -Optimize code
 -Translate to c++ and compile to web-asymebly
--Add difficulty toggle
+-Finish difficulty toggle
+-Add a reset game button
 """
 
 class PiMemoryGame:

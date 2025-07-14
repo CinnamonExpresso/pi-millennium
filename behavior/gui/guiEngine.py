@@ -196,6 +196,63 @@ class GuiSlider:
         self.draw()
         self.handle_event()
 
+#Selection box
+class GuiSelectionBox:
+    def __init__(self, pos, surface, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None):
+        self.pos = pos
+        self.surface = surface
+        self.options = options
+        self.size = size
+        self.select_val_main = select_val_main
+        self.select_val_sub = select_val_sub
+        self.text_color = text_color
+        self.box_color = box_color
+        self.border_color = border_color
+        self.border_width = border_width
+        self.current_index = def_index
+        self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
+        self.font = font or pygame.font.SysFont(None, 32)
+        self.update_selected_value()
+        self.timers = {
+            "selection_cooldown": Timer(duration=100)
+        }
+
+    def update_selected_value(self):
+        selected_value = self.options[self.current_index]
+        if self.select_val_sub:
+            globalvars.settings[self.select_val_main][self.select_val_sub] = selected_value
+        else:
+            globalvars.settings[self.select_val_main] = selected_value
+
+    def draw(self):
+        # Draw border
+        pygame.draw.rect(surface=self.surface, color=self.border_color, rect=self.rect, width=self.border_width, border_radius=5)
+        # Draw box
+        inner_rect = self.rect.inflate(-self.border_width*2, -self.border_width*2)
+        pygame.draw.rect(surface=self.surface, color=self.box_color, rect=inner_rect, border_radius=5)
+
+        # Render current option text
+        text_surf = self.font.render(str(self.options[self.current_index]), True, self.text_color)
+        text_rect = text_surf.get_rect(center=self.rect.center)
+        self.surface.blit(text_surf, text_rect)
+
+    def change_state(self):
+        self.current_index = (self.current_index + 1) % len(self.options)
+        self.update_selected_value()
+        self.timers["selection_cooldown"].activate()
+
+    def update(self):
+        self.draw()
+        self.handle_event()
+        self.timers["selection_cooldown"].update()
+
+    def handle_event(self):
+        mouse_pos = pygame.mouse.get_pos()
+
+        if pygame.mouse.get_pressed()[0] and not self.timers["selection_cooldown"].active:
+            if self.rect.collidepoint(mouse_pos):
+                self.change_state()
+
 #For input boxes
 class GuiInputBox:
     def __init__(self, surface, pos:tuple[int], size:tuple[int]=(64,20), color:tuple[int|float]=(255,255,255,1), border_color:tuple[int|float]=(22, 22, 22, 1), clicked_border_color:tuple[int|float]=(0, 90, 152, 1), border_width:int=3, font_color:tuple[int|float]=(0,0,0,1), font_size:int=32, font_name:str=None, text_type:str="int", def_text:str="", text_length_limit:tuple[int]=(1,3), fn_callback=None, fn_args=None, auto_submit:bool=False):
@@ -434,6 +491,7 @@ class GUI:
                     "text": None,
                     "checkbox": None,
                     "input_box": None,
+                    "selectionbox": None,
                     "slider": None
                 }
             elif len(self.tab_content[tab_content_id]) == 0:
@@ -441,6 +499,7 @@ class GUI:
                     "text": None,
                     "checkbox": None,
                     "input_box": None,
+                    "selectionbox": None,
                     "slider": None
                 }
             elif type not in self.tab_content[tab_content_id]:
@@ -449,6 +508,27 @@ class GUI:
         new_content_lst.append(obj)
 
         self.tab_content[tab_content_id][type] = new_content_lst
+
+    def create_selectionbox(self, pos, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, is_tab_content:bool=False, tab_content_id:int=0):
+        selection_box = GuiSelectionBox(
+            pos=pos,
+            surface=self.surface,  # Pygame surface
+            options=options,
+            select_val_main=select_val_main,
+            def_index=def_index,
+            select_val_sub=select_val_sub,
+            size=size,
+            text_color=text_color,
+            box_color=box_color,
+            border_color=border_color,
+            border_width=border_width,
+            font=font
+        )
+
+        if is_tab_content and self.tabs_enabled: #IF this is tab content
+            self.new_tab_content(type="selectionbox", obj=selection_box, tab_content_id=tab_content_id)
+        else:
+            self.checkbox_list.append(selection_box)
 
     #create text
     def create_text(self, pos, text_content, font_name, text_color=(0,0,0,1), font_size=42, is_tab_content:bool=False, tab_content_id:int=0, text_attr:tuple[str,int]=None, align:str="center"):
@@ -515,6 +595,15 @@ class GUI:
                                             index=index
                                         )
                                         checkbox.draw()
+                                #render selectionbox
+                                if content["selectionbox"] and text.text_attr[0] == "selectionbox":
+                                    selectionbox = content["selectionbox"][text.text_attr[1]]
+                                    self.__render_text_attr(
+                                        content=selectionbox,
+                                        mouse_pos=mouse_pos,
+                                        index=index
+                                    )
+                                    selectionbox.update()
                                 #Render inputBoxes
                                 if content["input_box"] and text.text_attr[0] == "input_box":
                                     input_Box = content["input_box"][text.text_attr[1]]

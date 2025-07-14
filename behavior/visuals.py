@@ -314,16 +314,15 @@ class Visuals:
             font_size=32,
             is_tab_content=True,
             tab_content_id=0,
-            text_attr=("checkbox", 0)
+            text_attr=("selectionbox", 0)
         )
-        self.settingsGui.create_checkbox(
-            pos = (self.settingsGui.tab_content[0]["text"][0].text_pos[0],  self.settingsGui.tab_content[0]["text"][0].text_pos[1]),
-            size=(32, 32),
-            is_tab_content=True,
-            def_value=globalvars.settings["general"]["debug_mode"],
+        self.settingsGui.create_selectionbox(
+            pos=(self.settingsGui.tab_content[0]["text"][1].text_pos[0],  self.settingsGui.tab_content[0]["text"][1].text_pos[1]),
+            options=["Easy", "Normal", "Hard"],
+            select_val_main="difficulty",
+            def_index=1,
             tab_content_id=0,
-            check_val_main="general",
-            check_val_sub="debug_mode"
+            is_tab_content=True
         )
 
         #----Audio
