@@ -8,7 +8,8 @@ from behavior.gui.fontEngine import render_text_with_border
 from behavior.gui.guiToast import Toast
 from behavior.visuals import Visuals
 import data.globalvars as globalvars
-from behavior.utils.generalUtils import reset_menu_state, update_pause_states, change_game_speed
+from behavior.utils.generalUtils import reset_menu_state, update_pause_states, change_game_speed, update_debug_stats, update_timers
+from behavior.utils.timer import Timer
 
 # Initialize pygame
 pygame.init()
@@ -23,7 +24,6 @@ pygame.display.set_caption("Pi Millennium")
 
 """
 TODO:
--Add debug stuff
 -Maybe some graphical changes
 -Optimize code
 -Translate to c++ and compile to web-asymebly
@@ -265,6 +265,10 @@ class PiMemoryGame:
         elif  globalvars.menu_state["mainMenu"]:
             self.visuals.mainMenuGui.update()
 
+        if globalvars.settings["general"]["debug_mode"]:
+            self.visuals.rebuild_debug_gui()
+            self.visuals.debugGui.update()
+
         # Draw active toasts
         for i, toast in enumerate(self.toasts):
             toast.draw(screen, i, len(self.toasts))
@@ -301,6 +305,10 @@ class PiMemoryGame:
 
 def main():
     clock = pygame.time.Clock()
+    timers = {
+        "debug_stat_update": Timer(100)
+    }
+
     game = PiMemoryGame()
     globalvars.achievements = game.data.data["achievements"] #load saved achievement data
     game.visuals.build_gui()
@@ -316,5 +324,12 @@ def main():
         game.draw()
         clock.tick(60)
 
+        if globalvars.settings["general"]["debug_mode"] and not timers["debug_stat_update"].active:
+            update_debug_stats("FPS", round(clock.get_fps()), game.visuals.rebuild_debug_gui)
+            timers["debug_stat_update"].activate()
+
+        if any(timer.active for timer in timers.values()):
+            timers = update_timers(timers)
+                                   
 if __name__ == "__main__":
     main()

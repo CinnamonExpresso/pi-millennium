@@ -7,7 +7,7 @@ debug_stats = {
 
 settings = {
     "general": {
-        "debug_mode": True
+        "debug_mode": False
     },
     "graphics": {
         "fps_cap": 60

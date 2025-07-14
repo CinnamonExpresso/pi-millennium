@@ -20,9 +20,9 @@ def update_stats(name, amount):
     globalvars.visuals.rebuild_stat_gui()
 
 #update debug stats
-def update_debug_stats(name, amount):
+def update_debug_stats(name, amount, callback_fb):
     globalvars.debug_stats[name] = amount
-    globalvars.visuals.rebuild_debug_gui()
+    callback_fb()
 
 #updates timers
 def update_timers(timers:dict):

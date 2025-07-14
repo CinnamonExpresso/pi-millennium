@@ -24,6 +24,7 @@ class Visuals:
         self.creditsGui.create_menu_rects("center")
         self.achievementsGui.create_menu_rects("center")
         self.settingsGui.create_menu_rects("top")
+        
     # Just to handle the back button double click issue
     def back_btn(self):
         reset_menu_state()
@@ -39,12 +40,23 @@ class Visuals:
 
     def achievement_titles(self):
         for achievement in globalvars.achievements:
-            print(achievement)
             self.achievement_titles_lst.append(achievement["title"])
-        
+    
+    #reublids debug stats
+    def rebuild_debug_gui(self):
+        self.debugGui = GUI(surface=self.surface)
+        self.debugGui.txt_list.clear()
+        self.debugGui.create_text(
+                        pos = (20, HEIGHT - 40),
+                        text_content = f"FPS: {globalvars.debug_stats["FPS"]}",
+                        text_color = COLORS["WHITE"],
+                        font_name=None,
+                        font_size=32
+        )
+
     def build_gui(self):
         self.achievement_titles()
-        print(self.achievement_titles_lst)
+
         #Main menu gui
         self.mainMenuGui.create_btn(
             pos=((WIDTH//2) - (480//2),  self.mainMenuGui.menu_rect.top + 80),
@@ -277,6 +289,26 @@ class Visuals:
         self.settingsGui.create_text(
             pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
             text_content = "Debug Mode: ",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32,
+            is_tab_content=True,
+            tab_content_id=0,
+            text_attr=("checkbox", 0)
+        )
+        self.settingsGui.create_checkbox(
+            pos = (self.settingsGui.tab_content[0]["text"][0].text_pos[0],  self.settingsGui.tab_content[0]["text"][0].text_pos[1]),
+            size=(32, 32),
+            is_tab_content=True,
+            def_value=globalvars.settings["general"]["debug_mode"],
+            tab_content_id=0,
+            check_val_main="general",
+            check_val_sub="debug_mode"
+        )
+
+        self.settingsGui.create_text(
+            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
+            text_content = "Difficulty: ",
             text_color = COLORS["WHITE"],
             font_name=None,
             font_size=32,
