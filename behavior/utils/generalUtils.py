@@ -42,7 +42,7 @@ def update_global_settings_value(category: str, name: str, value: any):
 
 #Detects if program is running in web asymb
 def is_web_asm():
-    return hasattr(sys, "emscripten")
+    return sys.platform == "emscripten"
 
 #updates timers
 def update_timers(timers:dict):

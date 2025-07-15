@@ -82,41 +82,42 @@ class GuiBtn:
                     
                     #Apply tooltips
                     if self.rect.collidepoint(self.mouse_pos):
-                        if  self.timers["tooltip_hover_recent"].active:
-                            self.timers["tooltip_hover_recent"].update()
+                        if self.flags["tooltips_enabled"]:
+                            if  self.timers["tooltip_hover_recent"].active:
+                                self.timers["tooltip_hover_recent"].update()
 
-                        if self.timers["tooltip_hover_recent"].finished():
-                            if not self.timers["tooltip_hover"].active and not self.flags["tooltip_active"]:
-                                self.timers["tooltip_hover"].activate()
-                            else:
-                                self.timers["tooltip_hover"].update()
+                            if self.timers["tooltip_hover_recent"].finished():
+                                if not self.timers["tooltip_hover"].active and not self.flags["tooltip_active"]:
+                                    self.timers["tooltip_hover"].activate()
+                                else:
+                                    self.timers["tooltip_hover"].update()
 
-                        # If hover timer is finished, mark tooltip as active
-                        if not self.timers["tooltip_hover"].active:
-                            self.flags["tooltip_active"] = True
+                            # If hover timer is finished, mark tooltip as active
+                            if not self.timers["tooltip_hover"].active:
+                                self.flags["tooltip_active"] = True
 
-                        # Show tooltip after timer has ended
-                        if self.flags["tooltip_active"]:
-                            # Render the text
-                            text_surf = self.font.render(self.text, True, self.tooltip_color)
-                            text_rect = text_surf.get_rect()
+                            # Show tooltip after timer has ended
+                            if self.flags["tooltip_active"]:
+                                # Render the text
+                                text_surf = self.font.render(self.text, True, self.tooltip_color)
+                                text_rect = text_surf.get_rect()
 
-                            # Padding around the text
-                            padding = 6
-                            tooltip_width = text_rect.width + padding * 2
-                            tooltip_height = text_rect.height + padding * 2
+                                # Padding around the text
+                                padding = 6
+                                tooltip_width = text_rect.width + padding * 2
+                                tooltip_height = text_rect.height + padding * 2
 
-                            # Tooltip position (above the button)
-                            tooltip_x = self.rect.centerx + tooltip_width // 2
-                            tooltip_y = self.rect.centery - tooltip_height // 2
+                                # Tooltip position (above the button)
+                                tooltip_x = self.rect.centerx + tooltip_width // 2
+                                tooltip_y = self.rect.centery - tooltip_height // 2
 
-                            # Draw tooltip background (black with border radius)
-                            tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_width, tooltip_height)
-                            pygame.draw.rect(self.surface, (0, 0, 0), tooltip_rect, border_radius=5)
+                                # Draw tooltip background (black with border radius)
+                                tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_width, tooltip_height)
+                                pygame.draw.rect(self.surface, (0, 0, 0), tooltip_rect, border_radius=5)
 
-                            # Blit the text centered in the tooltip
-                            text_pos = (tooltip_rect.centerx - text_rect.width // 2, tooltip_rect.centery - text_rect.height // 2)
-                            self.surface.blit(text_surf, text_pos)
+                                # Blit the text centered in the tooltip
+                                text_pos = (tooltip_rect.centerx - text_rect.width // 2, tooltip_rect.centery - text_rect.height // 2)
+                                self.surface.blit(text_surf, text_pos)
 
                         #Execute function on click
                         self.input(recent_click)
