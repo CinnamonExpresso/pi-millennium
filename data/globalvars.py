@@ -2,7 +2,7 @@
 
 #Dicts
 debug_stats = {
-    "FPS": 0
+    "FPS": 0 #the current fps of the program
 }
 
 settings = {
@@ -10,12 +10,12 @@ settings = {
         "debug_mode": False
     },
     "graphics": {
-        "fps_cap": 60
+        "fps_cap": 60 #fps cap to prevent overloading the system
     },
     "audio": {
         "music_enabled": True,
         "sound_enabled": True,
-        "music_vol": 1.0,
+        "music_vol": 0.2,
         "sound_vol": 1.0
     }
 }
@@ -48,7 +48,7 @@ difficulty = 0 #0 = easy, 1 = medium, 2 = hard
 achievements = [] #list of player achievements
 
 #Floats
-dt = 1 / 60
+dt = 1 / 60 #delta time
 
 #booleans
 is_btn_hover:bool = False

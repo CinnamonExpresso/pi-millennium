@@ -8,9 +8,10 @@ from behavior.utils.generalUtils import reset_menu_state, change_game_speed, upd
 
 #Class for handeling gui buttons
 class GuiBtn:
-    def __init__(self, pos, height, width, text, color, hover_color, text_color, img=None, border_color=None, border_width=2, funct=None, tooltip_color=COLORS["WHITE"], funct_args=None):
+    def __init__(self, pos, height, surface, width, text, color, hover_color, text_color, img=None, border_color=None, border_width=2, funct=None, tooltip_color=COLORS["WHITE"], funct_args=None, flags:list[bool]=[False]):
         self.pos = pos
         self.height = height
+        self.surface = surface
         self.width = width
         self.text = text
         self.color = color
@@ -23,11 +24,103 @@ class GuiBtn:
         self.funct = funct #Executes function when clicked
         self.tooltip_color = tooltip_color
         self.funct_args = funct_args #optional callback function arguments
+        self.flags = {
+            "tooltips_enabled": flags[0],
+            "tooltip_active": False
+        }
+        self.timers = {
+            "btn_click": Timer(100), #Prevents click spam
+            "tooltip_hover": Timer(2000), #Time needed for tool tip appearing
+            "tooltip_hover_recent": Timer(2000) #Timer to prevent flickering on the tooltip
+        }
 
         if img:
-            self.img = pygame.image.load(f"./resources/{img}")
+            self.img = pygame.image.load(f"./{img}")
         else: 
             self.img = None
+
+    def apply_clicked_tab(self):
+        base_color = self.color
+        clicked_color = tuple(max(0, int(c * 0.7)) for c in base_color[:3])
+        pygame.draw.rect(self.surface, clicked_color, self.rect.inflate(-self.border_width * 2, -self.border_width * 2), border_radius=5)
+
+    def input(self, recent_click):
+        if pygame.mouse.get_pressed()[0] and (not self.timers["btn_click"].active or not recent_click):
+            self.timers["btn_click"].activate()
+
+            if self.funct:
+                if self.funct_args:
+                    self.funct(self.funct_args)
+                else:
+                    self.funct()
+
+    def draw(self, recent_click):
+        #Draw border
+                    if self.border_color:
+                        pygame.draw.rect(self.surface, self.border_color, self.rect, border_radius=5)
+                    
+                    # Draw main button (with hover effect)
+                    if self.rect.collidepoint(self.mouse_pos):
+                        pygame.draw.rect(self.surface, self.hover_color, self.rect.inflate(-self.border_width * 2, -self.border_width * 2), border_radius=5)
+                    else:
+                        pygame.draw.rect(self.surface, self.color, self.rect.inflate(-self.border_width * 2, -self.border_width * 2), border_radius=5)
+
+                    # Draw image if available
+                    if self.img:
+                        # Resize the image if needed to fit inside the button
+                        img = pygame.transform.scale(self.img, (self.height - 16, self.height - 16))  # square fit
+                        img_rect = img.get_rect(midleft=(self.rect.left + 8, self.rect.centery))
+                        self.surface.blit(img, img_rect)
+                    else:
+                        # No image: just center the text
+                        text_surf = self.font.render(self.text, True, self.text_color)
+                        text_rect = text_surf.get_rect(center=self.rect.center)
+                        self.surface.blit(text_surf, text_rect)
+                    
+                    #Apply tooltips
+                    if self.rect.collidepoint(self.mouse_pos):
+                        if  self.timers["tooltip_hover_recent"].active:
+                            self.timers["tooltip_hover_recent"].update()
+
+                        if self.timers["tooltip_hover_recent"].finished():
+                            if not self.timers["tooltip_hover"].active and not self.flags["tooltip_active"]:
+                                self.timers["tooltip_hover"].activate()
+                            else:
+                                self.timers["tooltip_hover"].update()
+
+                        # If hover timer is finished, mark tooltip as active
+                        if not self.timers["tooltip_hover"].active:
+                            self.flags["tooltip_active"] = True
+
+                        # Show tooltip after timer has ended
+                        if self.flags["tooltip_active"]:
+                            # Render the text
+                            text_surf = self.font.render(self.text, True, self.tooltip_color)
+                            text_rect = text_surf.get_rect()
+
+                            # Padding around the text
+                            padding = 6
+                            tooltip_width = text_rect.width + padding * 2
+                            tooltip_height = text_rect.height + padding * 2
+
+                            # Tooltip position (above the button)
+                            tooltip_x = self.rect.centerx + tooltip_width // 2
+                            tooltip_y = self.rect.centery - tooltip_height // 2
+
+                            # Draw tooltip background (black with border radius)
+                            tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_width, tooltip_height)
+                            pygame.draw.rect(self.surface, (0, 0, 0), tooltip_rect, border_radius=5)
+
+                            # Blit the text centered in the tooltip
+                            text_pos = (tooltip_rect.centerx - text_rect.width // 2, tooltip_rect.centery - text_rect.height // 2)
+                            self.surface.blit(text_surf, text_pos)
+
+                        #Execute function on click
+                        self.input(recent_click)
+
+    def update(self, recent_click=False):
+        self.mouse_pos = pygame.mouse.get_pos()
+        self.draw(recent_click=recent_click)
 
     def is_clicked(self, event):
         return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
@@ -198,7 +291,7 @@ class GuiSlider:
 
 #Selection box, user can click the box to cycle through different options
 class GuiSelectionBox:
-    def __init__(self, pos, surface, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, callback_fn=None):
+    def __init__(self, pos, surface, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, callback_fn=None, has_arrows=False):
         self.pos = pos
         self.surface = surface
         self.options = options #List of selection options Ex: ["easy", "medium", "hard"]
@@ -216,7 +309,18 @@ class GuiSelectionBox:
         self.timers = {
             "selection_cooldown": Timer(duration=100) #prevent spam, can be adjust obv
         }
+        self.flags= {
+            "has_arrows": has_arrows #shows arrow images
+        }
         self.callback_fn = callback_fn #Call back function that executes when a change in state occurs
+
+        if self.flags["has_arrows"]:
+            self.__create_arrows()
+
+    #Generate arrow img
+    def __create_arrows(self):
+        self.__left_arrow_img = pygame.image.load(f"./resources/icons/left-arrow.png").convert_alpha()
+        self.__right_arrow_img = pygame.image.load(f"./resources/icons/right-arrow.png").convert_alpha()
 
     def update_selected_value(self):
         selected_value = self.options[self.current_index]
@@ -237,25 +341,60 @@ class GuiSelectionBox:
         text_rect = text_surf.get_rect(center=self.rect.center)
         self.surface.blit(text_surf, text_rect)
 
-    def change_state(self):
-        self.current_index = (self.current_index + 1) % len(self.options)
+        # Show arrow icons
+        if self.flags["has_arrows"] and self.rect.collidepoint(self.mouse_pos):
+            size = list(self.size)
+            left_arrow_img = pygame.transform.scale(self.__left_arrow_img, (size[1] - 20, size[1] - 20))  # square fit
+            self.surface.blit(left_arrow_img, self.__left_arrow_rect)
+
+            right_arrow_img = pygame.transform.scale(self.__right_arrow_img, (size[1] - 20, size[1] - 20))  # square fit
+            self.surface.blit(right_arrow_img, self.__right_arrow_rect)
+
+    def change_state(self, click_type=None):
+        if not click_type:
+            self.current_index = (self.current_index + 1) % len(self.options)
+        elif click_type == "Right":
+            self.current_index = (self.current_index + 1) % len(self.options)
+            print("right")
+        elif click_type == "Left":
+            self.current_index = (self.current_index - 1) % len(self.options)
+            print("left")
+
         self.update_selected_value()
         self.timers["selection_cooldown"].activate()
 
         if self.callback_fn:
-            self.callback_fn()
+            self.callback_fn(self.current_index)
+
+    def __update_arrow_rects(self):
+        size = list(self.size)
+        if self.flags["has_arrows"]:
+            self.__left_arrow_rect = pygame.transform.scale(
+                self.__left_arrow_img, (size[1] - 20, size[1] - 20)
+            ).get_rect(midleft=(self.rect.left + 2, self.rect.centery))
+
+            self.__right_arrow_rect = pygame.transform.scale(
+                self.__right_arrow_img, (size[1] - 20, size[1] - 20)
+            ).get_rect(midright=(self.rect.right - 2, self.rect.centery))
 
     def update(self):
-        self.draw()
+        self.mouse_pos = pygame.mouse.get_pos()
+        self.__update_arrow_rects()
         self.handle_event()
+        self.draw()
         self.timers["selection_cooldown"].update()
 
     def handle_event(self):
         mouse_pos = pygame.mouse.get_pos()
 
         if pygame.mouse.get_pressed()[0] and not self.timers["selection_cooldown"].active:
-            if self.rect.collidepoint(mouse_pos):
+            if self.rect.collidepoint(mouse_pos) and not self.flags["has_arrows"]:
                 self.change_state()
+            elif self.flags["has_arrows"]:
+                if self.__right_arrow_rect.collidepoint(mouse_pos):
+                    self.change_state(click_type="Right")
+                elif self.__left_arrow_rect.collidepoint(mouse_pos):
+                    self.change_state(click_type="Left")
 
 #For input boxes
 class GuiInputBox:
@@ -445,12 +584,17 @@ class GUI:
         self.input_box_list = []
         self.checkbox_list = []
         self.timers = {
-            "btn_click": Timer(100)
+            "btn_click": Timer(100), #Prevents click spam
+            "tooltip_hover": Timer(2000), #Time needed for tool tip appearing
+            "tooltip_hover_recent": Timer(2000) #Timer to prevent flickering on the tooltip
         }
-        self.menu_open = False #Menu opened flag
-        self.tabs_enabled = tabs_enabled #Flag for enableing tabs
         self.surface = surface
         self.menu_rect = None
+        self.flags = {
+            "tooltip_active": False, #Flag for checking if a tooltip is active
+            "menu_open": False, #Menu opened flag
+            "tabs_enabled": tabs_enabled #Flag for enableing tabs
+        }
 
         if tabs_enabled:
             self.tab_state:list[str] = []
@@ -460,18 +604,18 @@ class GUI:
 
     #add tabs
     def add_tabs(self, tabs:list[str]):
-        if self.tabs_enabled:
+        if self.flags["tabs_enabled"]:
             for tab in tabs:
                 self.tab_state.append(tab)
     
     #changes the tab state
     def change_tab_state(self, tab:int=0):
-        if self.tabs_enabled:
+        if self.flags["tabs_enabled"]:
             self.cur_tab = tab
 
     #Opens menu
     def open_menu(self):
-        self.menu_open = not self.menu_open
+        self.flags["menu_open"] = not self.flags["menu_open"]
         self.timers["btn_click"].activate()
         update_pause_states()
 
@@ -496,7 +640,8 @@ class GUI:
                     "checkbox": None,
                     "input_box": None,
                     "selectionbox": None,
-                    "slider": None
+                    "slider": None,
+                    "button": None,
                 }
             elif len(self.tab_content[tab_content_id]) == 0:
                 self.tab_content[tab_content_id] = {
@@ -504,7 +649,8 @@ class GUI:
                     "checkbox": None,
                     "input_box": None,
                     "selectionbox": None,
-                    "slider": None
+                    "slider": None,
+                    "button": None
                 }
             elif type not in self.tab_content[tab_content_id]:
                 self.tab_content[tab_content_id][type] = None
@@ -513,7 +659,7 @@ class GUI:
 
         self.tab_content[tab_content_id][type] = new_content_lst
 
-    def create_selectionbox(self, pos, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, is_tab_content:bool=False, tab_content_id:int=0, callback_fn=None):
+    def create_selectionbox(self, pos, options, select_val_main, def_index=0, select_val_sub=None, size=(100, 36), text_color=(0, 0, 0), box_color=(255, 255, 255), border_color=(22, 22, 22), border_width=3, font=None, is_tab_content:bool=False, tab_content_id:int=0, callback_fn=None, has_arrows=False):
         selection_box = GuiSelectionBox(
             pos=pos,
             surface=self.surface,  # Pygame surface
@@ -527,10 +673,11 @@ class GUI:
             border_color=border_color,
             border_width=border_width,
             font=font,
-            callback_fn=callback_fn
+            callback_fn=callback_fn,
+            has_arrows=has_arrows
         )
 
-        if is_tab_content and self.tabs_enabled: #IF this is tab content
+        if is_tab_content and self.flags["tabs_enabled"]: #IF this is tab content
             self.new_tab_content(type="selectionbox", obj=selection_box, tab_content_id=tab_content_id)
         else:
             self.checkbox_list.append(selection_box)
@@ -540,7 +687,7 @@ class GUI:
         new_text = GuiText(pos=pos, text_content=text_content, text_color=text_color, font_size=font_size, font_name=font_name, text_attr=text_attr)
         new_text.create_text(align=align)
         
-        if is_tab_content and self.tabs_enabled: #IF this is tab content
+        if is_tab_content and self.flags["tabs_enabled"]: #IF this is tab content
             if text_attr:
                 self.new_tab_content(type="text", obj=new_text, tab_content_id=tab_content_id)
             else:
@@ -577,7 +724,7 @@ class GUI:
                 self.surface.blit(txt.text_surf, txt.text_pos)
 
         #Render tab content
-        if self.tabs_enabled:
+        if self.flags["tabs_enabled"]:
             txt_vert_spacing = 60 #verticle spacing in pixels
 
             if self.cur_tab in self.tab_content:
@@ -633,6 +780,15 @@ class GUI:
                                     )
                                     slider.update_thumb_position()
                                     slider.update()
+                                #render buttons
+                                if content["button"] and text.text_attr[0] == "button":
+                                    button = content["button"][text.text_attr[1]]
+                                    self.__render_text_attr(
+                                        content=button,
+                                        mouse_pos=mouse_pos,
+                                        index=index
+                                    )
+                                    button.update(recent_click=self.timers["btn_click"].active)
 
         #Render checkboxes
         if len(self.checkbox_list) >= 1:
@@ -642,74 +798,23 @@ class GUI:
         #Render buttons
         if len(self.btn_list) >= 1:
             for i, btn in enumerate(self.btn_list):
-                    #Draw border
-                    if btn.border_color:
-                        pygame.draw.rect(self.surface, btn.border_color, btn.rect, border_radius=5)
-                    
-                    # Draw main button (with hover effect)
-                    if btn.rect.collidepoint(mouse_pos):
-                        pygame.draw.rect(self.surface, btn.hover_color, btn.rect.inflate(-btn.border_width * 2, -btn.border_width * 2), border_radius=5)
-                    else:
-                        if self.tabs_enabled and self.cur_tab == i:
-                            base_color = btn.color
-                            clicked_color = tuple(max(0, int(c * 0.7)) for c in base_color[:3])
-                            pygame.draw.rect(self.surface, clicked_color, btn.rect.inflate(-btn.border_width * 2, -btn.border_width * 2), border_radius=5)
-                        else:
-                            pygame.draw.rect(self.surface, btn.color, btn.rect.inflate(-btn.border_width * 2, -btn.border_width * 2), border_radius=5)
-
-                    # Draw image if available
-                    if btn.img:
-                        # Resize the image if needed to fit inside the button
-                        img = pygame.transform.scale(btn.img, (btn.height - 16, btn.height - 16))  # square fit
-                        img_rect = img.get_rect(midleft=(btn.rect.left + 8, btn.rect.centery))
-                        self.surface.blit(img, img_rect)
-                    else:
-                        # No image: just center the text
-                        text_surf = btn.font.render(btn.text, True, btn.text_color)
-                        text_rect = text_surf.get_rect(center=btn.rect.center)
-                        self.surface.blit(text_surf, text_rect)
-                    
-                    #Apply tooltips
-                    if btn.rect.collidepoint(mouse_pos):
-                        # Render the text
-                        text_surf = btn.font.render(btn.text, True, btn.tooltip_color)
-                        text_rect = text_surf.get_rect()
-
-                        # Padding around the text
-                        padding = 6
-                        tooltip_width = text_rect.width + padding * 2
-                        tooltip_height = text_rect.height + padding * 2
-
-                        # Tooltip position (above the button)
-                        tooltip_x = btn.rect.centerx + tooltip_width // 2
-                        tooltip_y = btn.rect.centery - tooltip_height // 2
-
-                        # Draw tooltip background (black with border radius)
-                        tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_width, tooltip_height)
-                        pygame.draw.rect(self.surface, (0, 0, 0), tooltip_rect, border_radius=5)
-
-                        # Blit the text centered in the tooltip
-                        text_pos = (tooltip_rect.centerx - text_rect.width // 2, tooltip_rect.centery - text_rect.height // 2)
-                        self.surface.blit(text_surf, text_pos)
-
-                        #Execute function on click
-                        if pygame.mouse.get_pressed()[0] and not self.timers["btn_click"].active:
-                            self.timers["btn_click"].activate()
-
-                            if btn.funct:
-                                if btn.funct_args:
-                                    btn.funct(btn.funct_args)
-                                else:
-                                    btn.funct()
+                if self.flags["tabs_enabled"] and self.cur_tab == i:
+                    btn.apply_clicked_tab()
+                btn.update(recent_click=self.timers["btn_click"].active)
 
     #Creates btns from specified input
-    def create_btn(self, pos, height, width, text, color, hover_color, text_color, img=None, border_color=None, border_width=2, funct=None, funct_args_enabled=False, funct_args=None):
+    def create_btn(self, pos, height, width, text, color, hover_color, text_color, img=None, border_color=None, border_width=2, funct=None, funct_args_enabled=False, funct_args=None, is_tab_content:bool=False, tab_content_id:int=0,flags:list[bool]=[False]):
+        btn = None
         if funct_args_enabled:
-            btn = GuiBtn(pos, height, width, text, color, hover_color, text_color, img, border_color, border_width, funct, funct_args=funct_args)
+            btn = GuiBtn(pos=pos, surface=self.surface, height=height, width=width, text=text, color=color, hover_color=hover_color, text_color=text_color, img=img, border_color=border_color, border_width=border_width, funct=funct, flags=flags, funct_args=funct_args)
         else:
-            btn = GuiBtn(pos, height, width, text, color, hover_color, text_color, img, border_color, border_width, funct)
+            btn = GuiBtn(pos=pos, surface=self.surface, height=height, width=width, text=text, color=color, hover_color=hover_color, text_color=text_color, img=img, border_color=border_color, border_width=border_width, flags=flags, funct=funct)
 
-        self.btn_list.append(btn)
+        
+        if is_tab_content and self.flags["tabs_enabled"]: #IF this is tab content
+            self.new_tab_content(type="button", obj=btn, tab_content_id=tab_content_id)
+        else:
+            self.btn_list.append(btn)
 
     #Checkbox
     def create_checkbox(self, pos, check_val_main, check_val_sub=None, size=64, checked_color=(0, 167, 16, 1), unchecked_color=(255,255,255,1), border_color=(22, 22, 22, 1), is_tab_content=False, tab_content_id=0, def_value=False, border_width:int=3):
@@ -726,7 +831,7 @@ class GUI:
             border_width=border_width
         )
 
-        if is_tab_content and self.tabs_enabled: #IF this is tab content
+        if is_tab_content and self.flags["tabs_enabled"]: #IF this is tab content
             self.new_tab_content(type="checkbox", obj=new_checkbox, tab_content_id=tab_content_id)
         else:
             self.checkbox_list.append(new_checkbox)
@@ -748,14 +853,10 @@ class GUI:
             thumb_color=thumb_color
         )
 
-        if is_tab_content and self.tabs_enabled: #IF this is tab content
+        if is_tab_content and self.flags["tabs_enabled"]: #IF this is tab content
             self.new_tab_content(type="slider", obj=new_slider, tab_content_id=tab_content_id)
         else:
             self.slider_list.append(new_slider)
-
-    #Does as the name suggests
-    def update_global_settings_value(self, category: str, name: str, value: any):
-        globalvars.settings[category][name] = value
 
     #Text input field
     def create_input_box(self, pos:tuple[int], size:tuple[int]=(64,20), color:tuple[int|float]=(255,255,255,1), border_color:tuple[int|float]=(22, 22, 22, 1), clicked_border_color:tuple[int|float]=(0, 90, 152, 1), border_width:int=3, font_color:tuple[int|float]=(0,0,0,1), font_size:int=32, font_name:str=None, is_tab_content=False, tab_content_id=0, text_type:str="int", def_text:str="", text_length_limit:tuple[int]=(1,3), fn_callback=None, fn_args=None, auto_submit:bool=False):
@@ -778,7 +879,7 @@ class GUI:
             auto_submit=auto_submit
         )
 
-        if is_tab_content and self.tabs_enabled: #IF this is tab content
+        if is_tab_content and self.flags["tabs_enabled"]: #IF this is tab content
             self.new_tab_content(type="input_box", obj=new_input_box, tab_content_id=tab_content_id)
         else:
             self.input_box_list.append(new_input_box)

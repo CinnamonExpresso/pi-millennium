@@ -53,8 +53,8 @@ class PiMemoryGame:
             "misc": {
                 1: {"title": "High Achiever", "description": "You beat your high score for the first time."}
             }
-        } #the sub-key is the condition for the achievment
-        self.animated_seq = ""
+        } #the sub-key is the condition for the achievment. Note, both the title and description here is used for the Toast notifications'
+        self.animated_seq = "" #the current "pi sequence"
         self.animation_index = 0
         self.char_display_interval = 0.2  # seconds between characters
         self.last_char_time = time.time()
@@ -341,7 +341,7 @@ def main():
 
         game.update()
         game.draw()
-        clock.tick(60)
+        clock.tick(globalvars.settings["graphics"]["fps_cap"])
 
         if globalvars.settings["general"]["debug_mode"] and not timers["debug_stat_update"].active:
             update_debug_stats("FPS", round(clock.get_fps()), game.visuals.rebuild_debug_gui)
@@ -350,12 +350,13 @@ def main():
         if any(timer.active for timer in timers.values()):
             timers = update_timers(timers)
 
+        #Adjusts the games values with respect to the difficulty. Its evident that this could be improved upon, but this will surfice for now :p
         if globalvars.flags["difficulty_change"]:
             if globalvars.difficulty == 0: #easy
                 game.char_display_interval = 0.2
-            elif globalvars.difficulty == 1:
+            elif globalvars.difficulty == 1: #medium
                 game.char_display_interval = 0.1
-            else:
+            else: #hard
                 game.char_display_interval = 0
             
             globalvars.flags["difficulty_change"] = False

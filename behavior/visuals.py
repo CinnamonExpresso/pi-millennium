@@ -1,6 +1,6 @@
 from behavior.gui.guiEngine import GUI, FullMenu
 from behavior.settings import *
-from behavior.utils.generalUtils import quit_game, reset_menu_state, change_difficulty
+from behavior.utils.generalUtils import quit_game, reset_menu_state, change_difficulty, update_global_settings_value
 import data.globalvars as globalvars
 from pygame import time
 
@@ -204,7 +204,7 @@ class Visuals:
         self.achievementsGui.create_text(
             pos = (self.achievementsGui.txt_list[10].text_pos[0],  self.achievementsGui.txt_list[9].text_pos[1]),
             text_content = "Beat your high score for the first time",
-            text_color = (COLORS["WHITE"] if "500 club" in self.achievement_titles_lst else COLORS["GRAY"]),
+            text_color = (COLORS["WHITE"] if "High Achiever" in self.achievement_titles_lst else COLORS["GRAY"]),
             font_name=None,
             font_size=26
         )
@@ -288,26 +288,6 @@ class Visuals:
         #---Settings tab content
         self.settingsGui.create_text(
             pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
-            text_content = "Debug Mode: ",
-            text_color = COLORS["WHITE"],
-            font_name=None,
-            font_size=32,
-            is_tab_content=True,
-            tab_content_id=0,
-            text_attr=("checkbox", 0)
-        )
-        self.settingsGui.create_checkbox(
-            pos = (self.settingsGui.tab_content[0]["text"][0].text_pos[0],  self.settingsGui.tab_content[0]["text"][0].text_pos[1]),
-            size=(32, 32),
-            is_tab_content=True,
-            def_value=globalvars.settings["general"]["debug_mode"],
-            tab_content_id=0,
-            check_val_main="general",
-            check_val_sub="debug_mode"
-        )
-
-        self.settingsGui.create_text(
-            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
             text_content = "Difficulty: ",
             text_color = COLORS["WHITE"],
             font_name=None,
@@ -317,58 +297,81 @@ class Visuals:
             text_attr=("selectionbox", 0)
         )
         self.settingsGui.create_selectionbox(
-            pos=(self.settingsGui.tab_content[0]["text"][1].text_pos[0],  self.settingsGui.tab_content[0]["text"][1].text_pos[1]),
+            pos=(self.settingsGui.tab_content[0]["text"][0].text_pos[0],  self.settingsGui.tab_content[0]["text"][0].text_pos[1]),
             options=["Easy", "Normal", "Hard"],
             select_val_main="difficulty",
             def_index=globalvars.difficulty,
             tab_content_id=0,
             is_tab_content=True,
+            has_arrows=True,
             callback_fn=change_difficulty
+        )
+        self.settingsGui.create_text(
+            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
+            text_content = "FPS Cap: ",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32,
+            is_tab_content=True,
+            tab_content_id=0,
+            text_attr=("input_box", 0)
+        )
+        self.settingsGui.create_input_box(
+            pos = (self.settingsGui.tab_content[0]["text"][1].text_pos[0],  self.settingsGui.tab_content[0]["text"][1].text_pos[1]),
+            size=(64, 32),
+            is_tab_content=True,
+            tab_content_id=0,
+            text_type="int",
+            def_text=globalvars.settings["graphics"]["fps_cap"],
+            fn_callback=update_global_settings_value,
+            fn_args=["graphics", "fps_cap"]
+        )
+        self.settingsGui.create_text(
+            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
+            text_content = "Debug Mode: ",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32,
+            is_tab_content=True,
+            tab_content_id=0,
+            text_attr=("checkbox", 0)
+        )
+        self.settingsGui.create_checkbox(
+            pos = (self.settingsGui.tab_content[0]["text"][2].text_pos[0],  self.settingsGui.tab_content[0]["text"][2].text_pos[1]),
+            size=(32, 32),
+            is_tab_content=True,
+            def_value=globalvars.settings["general"]["debug_mode"],
+            tab_content_id=0,
+            check_val_main="general",
+            check_val_sub="debug_mode"
+        )
+        self.settingsGui.create_text(
+            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
+            text_content = "Reset Game: ",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32,
+            is_tab_content=True,
+            tab_content_id=0,
+            text_attr=("button", 0)
+        )
+        self.settingsGui.create_btn(
+            pos=(self.settingsGui.tab_content[0]["text"][2].text_pos[0],  self.settingsGui.tab_content[0]["text"][2].text_pos[1]),
+            width = 100,
+            height = 36,
+            text = "Reset",
+            color = COLORS["LIGHT_RED"],
+            hover_color = COLORS["CRIMSON"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=self.settingsGui.change_tab_state,
+            funct_args_enabled=True,
+            is_tab_content=True,
+            tab_content_id=0,
+            funct_args=1
         )
 
         #----Audio
-        self.settingsGui.create_text(
-            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
-            text_content = "Sound Volume: ",
-            text_color = COLORS["WHITE"],
-            font_name=None,
-            font_size=32,
-            is_tab_content=True,
-            tab_content_id=1,
-            text_attr=("slider", 0)
-        )
-        self.settingsGui.create_slider(
-            pos = (self.settingsGui.tab_content[1]["text"][0].text_pos[0],  self.settingsGui.tab_content[1]["text"][0].text_pos[1]),
-            is_tab_content=True,
-            tab_content_id=1,
-            bar_width=128,
-            filled_percentage=globalvars.settings["audio"]["sound_vol"],
-            callback_fn=self.settingsGui.update_global_settings_value,
-            callback_fn_args=["audio", "sound_vol"],
-            thumb_radius=24
-        )
-
-        self.settingsGui.create_text(
-            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
-            text_content = "Music Volume: ",
-            text_color = COLORS["WHITE"],
-            font_name=None,
-            font_size=32,
-            is_tab_content=True,
-            tab_content_id=1,
-            text_attr=("slider", 1)
-        )
-        self.settingsGui.create_slider(
-            pos = (self.settingsGui.tab_content[1]["text"][1].text_pos[0],  self.settingsGui.tab_content[1]["text"][1].text_pos[1]),
-            is_tab_content=True,
-            tab_content_id=1,
-            bar_width=128,
-            filled_percentage=globalvars.settings["audio"]["music_vol"],
-            callback_fn=self.settingsGui.update_global_settings_value,
-            callback_fn_args=["audio", "music_vol"],
-            thumb_radius=24
-        )
-
         self.settingsGui.create_text(
             pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
             text_content = "Music Enabled: ",
@@ -408,6 +411,48 @@ class Visuals:
             check_val_sub="sound_enabled"
         )
 
+        self.settingsGui.create_text(
+            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
+            text_content = "Sound Volume: ",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32,
+            is_tab_content=True,
+            tab_content_id=1,
+            text_attr=("slider", 0)
+        )
+        self.settingsGui.create_slider(
+            pos = (self.settingsGui.tab_content[1]["text"][0].text_pos[0],  self.settingsGui.tab_content[1]["text"][0].text_pos[1]),
+            is_tab_content=True,
+            tab_content_id=1,
+            bar_width=128,
+            filled_percentage=globalvars.settings["audio"]["sound_vol"],
+            callback_fn=update_global_settings_value,
+            callback_fn_args=["audio", "sound_vol"],
+            thumb_radius=24
+        )
+
+        self.settingsGui.create_text(
+            pos = (self.settingsGui.btn_list[0].pos[0] + 20,  self.settingsGui.btn_list[0].pos[1]+90),
+            text_content = "Music Volume: ",
+            text_color = COLORS["WHITE"],
+            font_name=None,
+            font_size=32,
+            is_tab_content=True,
+            tab_content_id=1,
+            text_attr=("slider", 1)
+        )
+        self.settingsGui.create_slider(
+            pos = (self.settingsGui.tab_content[1]["text"][1].text_pos[0],  self.settingsGui.tab_content[1]["text"][1].text_pos[1]),
+            is_tab_content=True,
+            tab_content_id=1,
+            bar_width=128,
+            filled_percentage=globalvars.settings["audio"]["music_vol"],
+            callback_fn=update_global_settings_value,
+            callback_fn_args=["audio", "music_vol"],
+            thumb_radius=24
+        )
+
         #Main
         self.mainGui.create_btn(
             pos=(WIDTH//2 - 60 //2, 60 + HEIGHT//2),
@@ -417,7 +462,7 @@ class Visuals:
             color = COLORS["WHITE"],
             hover_color = COLORS["GRAY"],
             text_color = COLORS["WHITE"],
-            img="restart.png",
+            img="resources/icons/restart.png",
             border_color=COLORS["BLACK"],
             funct=self.btn_cmds["restart_game"]
         )

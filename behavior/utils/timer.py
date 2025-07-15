@@ -31,6 +31,9 @@ class Timer:
             if self.func and self.start_time != 0:
                 self.func()
             self.deactivate()
+    
+    def finished(self):
+        return not self.active and self.start_time is not None
 
 class StopWatchTimer:
     def __init__(self):

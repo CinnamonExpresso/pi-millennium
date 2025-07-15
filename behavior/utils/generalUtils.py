@@ -24,6 +24,10 @@ def update_debug_stats(name, amount, callback_fb):
     globalvars.debug_stats[name] = amount
     callback_fb()
 
+#Does as the name suggests
+def update_global_settings_value(category: str, name: str, value: any):
+    globalvars.settings[category][name] = value
+
 #updates timers
 def update_timers(timers:dict):
     new_timers = timers
@@ -37,9 +41,10 @@ def quit_game():
     exit()
 
 #change game difficulty
-def change_difficulty():
-    globalvars.difficulty = (globalvars.difficulty + 1) % 3
+def change_difficulty(difficulty=0):
+    globalvars.difficulty = difficulty
     globalvars.flags["difficulty_change"] = True
+    print(globalvars.difficulty)
 
 #changes game speed
 def change_game_speed(speed=1):
