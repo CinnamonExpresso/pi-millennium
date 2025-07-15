@@ -4,6 +4,7 @@ BG_COLOR = (30, 30, 30)
 TEXT_COLOR = (255, 255, 255)
 SUCCESS_COLOR = (0, 200, 0)
 ERROR_COLOR = (200, 0, 0)
+SAVE_DATA_PATH = "data/save.json"
 
 # Colors
 COLORS = {

@@ -1,6 +1,8 @@
 import data.globalvars as globalvars
 from pygame import quit
 from sys import exit
+from behavior.settings import SAVE_DATA_PATH
+import json
 
 #Updates pause states to new values
 def update_pause_states():
@@ -34,6 +36,10 @@ def update_timers(timers:dict):
     for timer in new_timers.values():
         timer.update()
     return new_timers
+
+#Completely resets data
+def reset_game_data():
+    globalvars.flags["reset_flag"] = True
 
 #Exit the entire program
 def quit_game():

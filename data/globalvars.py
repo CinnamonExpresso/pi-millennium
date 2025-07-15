@@ -25,20 +25,22 @@ menu_state = { #Used for tracking which menu is open
     "credits": False,
     "mainMenu": True,
     "settings": False,
-    "achievements": False
+    "achievements": False,
+    "popup": False,
 }
 
 flags = {
     "main": True, #Credits/settings menu accessed from main
     "pause": False, #Credits/settings menu accessed from pause
-    "difficulty_change": False #Checks if the difficulty has been changed recently
+    "difficulty_change": False, #Checks if the difficulty has been changed recently
+    "reset_flag": False #Flag for completely resetting the game
 }
 
 cool_down = {
     "inputCooldownUntil": 0  # milliseconds
 }
 
-pause_states = [menu_state["pause"], menu_state["credits"], menu_state["mainMenu"], menu_state["settings"], menu_state["achievements"]] #menus that "pause the game"
+pause_states = [menu_state["pause"], menu_state["credits"], menu_state["mainMenu"], menu_state["settings"], menu_state["achievements"], menu_state["popup"]] #menus that "pause the game"
 
 #ints
 game_speed:int = 1 #Game speed 0 = Paused, 1 = normal, 2 = x2 speed, 3 = x3 speed

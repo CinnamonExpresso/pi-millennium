@@ -54,6 +54,9 @@ class GuiBtn:
                 else:
                     self.funct()
 
+    def change_state(self):
+        pass
+
     def draw(self, recent_click):
         #Draw border
                     if self.border_color:
@@ -121,6 +124,9 @@ class GuiBtn:
     def update(self, recent_click=False):
         self.mouse_pos = pygame.mouse.get_pos()
         self.draw(recent_click=recent_click)
+
+        if self.timers["btn_click"].active:
+            self.timers["btn_click"].update()
 
     def is_clicked(self, event):
         return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
@@ -886,7 +892,7 @@ class GUI:
 
 #FullMenu and Submenu inheirts from this
 class GuiMenu(GUI):
-    def __init__(self, surface, menu_header, menu_state_type, menu_height, menu_width, menu_background=None, menu_background_color=(255,255,255,255), tabs_enabled=False):
+    def __init__(self, surface, menu_header, menu_state_type, menu_height, menu_width, menu_background=None, menu_background_color=(255,255,255,255), tabs_enabled=False, header_color=(255,255,255)):
         super().__init__(surface, tabs_enabled)
         self.menu_header = menu_header
         self.menu_state_type = menu_state_type
@@ -894,6 +900,7 @@ class GuiMenu(GUI):
         self.menu_width = menu_width
         self.menu_background = menu_background
         self.menu_background_color = menu_background_color
+        self.header_color = header_color
     
     def update(self):
         self.display_menu()
@@ -943,8 +950,8 @@ class GuiMenu(GUI):
 
 #A menu that takes up the entire window
 class FullMenu(GuiMenu):
-    def __init__(self, surface, menu_header, menu_state_type, menu_height=550, menu_width=400, menu_background=None, menu_background_color=(255,255,255,255), bg_overlay=False, tabs_enabled=False):
-        super().__init__(surface, menu_header, menu_state_type, menu_height, menu_width, menu_background, menu_background_color, tabs_enabled)
+    def __init__(self, surface, menu_header, menu_state_type, menu_height=550, menu_width=400, menu_background=None, menu_background_color=(255,255,255,255), bg_overlay=False, tabs_enabled=False, header_color=(255,255,255)):
+        super().__init__(surface, menu_header, menu_state_type, menu_height, menu_width, menu_background, menu_background_color, tabs_enabled, header_color)
         self.bg_overlay = bg_overlay
     
     def display_menu_background(self):
@@ -965,6 +972,63 @@ class FullMenu(GuiMenu):
                 bg_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
                 bg_surface.fill((0, 0, 0, int(0.55 * 255))) 
                 self.surface.blit(bg_surface, (0, 0))
+                
+            # Blit the text
+            text_rect.centerx = self.menu_rect.centerx
+            text_rect.top = self.menu_rect.top + 20
+            
+            self.surface.blit(text_surf, text_rect)
+
+#A popup
+class Popup(FullMenu):
+    def __init__(self, surface, menu_header, menu_state_type, menu_height=200, menu_width=200, menu_background=None, menu_background_color=(255,255,255,255), bg_overlay=False, tabs_enabled=False, header_color=(255,255,255), rounded_corners=(False, 0)):
+        super().__init__(surface, menu_header, menu_state_type, menu_height, menu_width, menu_background, menu_background_color, tabs_enabled, bg_overlay, header_color)
+        self.rounded_corners = list(rounded_corners)
+    
+    def open_menu(self):
+        self.flags["menu_open"] = True
+        self.timers["btn_click"].activate()
+        
+        globalvars.menu_state[self.menu_state_type] = True
+        change_game_speed()
+        
+        #Show menu
+        if any(globalvars.menu_state.values()):
+            self.display_menu()
+            update_pause_states()
+
+    def display_menu_background(self):
+        bg_surf = pygame.Surface((self.menu_width, self.menu_height), pygame.SRCALPHA).convert_alpha()
+        
+        if self.rounded_corners[0]:
+            radius = self.rounded_corners[1]
+            pygame.draw.rect(
+                bg_surf,
+                self.menu_background_color,
+                (0, 0, self.menu_width, self.menu_height),
+                border_radius=radius
+            )
+        else:
+            bg_surf.fill(self.menu_background_color)
+            
+        self.surface.blit(
+            bg_surf,
+            ((WIDTH // 2) - (self.menu_width // 2), (HEIGHT // 2) - (self.menu_height // 2))
+        )
+
+    def display_menu(self):
+        if any(globalvars.menu_state.values()):
+            # Render the text
+            text_surf = self.font.render(self.menu_header, True, self.header_color)
+            text_rect = text_surf.get_rect()
+
+            if self.menu_background:
+                self.display_menu_background()
+            elif self.bg_overlay:
+                #Background
+                bg_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                bg_surface.fill((0, 0, 0, int(0.55 * 255))) 
+                self.surface.blit(bg_surface, ((WIDTH//2)-(self.menu_width//2), (HEIGHT//2)-(self.menu_height//2)))
                 
             # Blit the text
             text_rect.centerx = self.menu_rect.centerx

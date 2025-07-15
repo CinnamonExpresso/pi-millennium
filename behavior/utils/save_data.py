@@ -1,13 +1,13 @@
 import json
+from behavior.settings import SAVE_DATA_PATH
 
 class Data:
     def __init__(self):
-        self.data_path = "data/save.json"
         self.data = None
         self.load_data()
     
     def load_data(self):
-        with open(self.data_path, 'r') as openfile:
+        with open(SAVE_DATA_PATH, 'r') as openfile:
             self.data = json.load(openfile)
 
     def save_data(self, input_data:dict):
@@ -21,5 +21,12 @@ class Data:
             new_data["achievements"] = input_data["achievements"]
 
         #Write new data
-        with open(self.data_path, "w") as outfile:
+        with open(SAVE_DATA_PATH, "w") as outfile:
+            json.dump(new_data, outfile)
+    
+    def reset_data(self):
+        new_data = {"high_score": 0, "achievements": []}
+
+        #Write new data
+        with open(SAVE_DATA_PATH, "w") as outfile:
             json.dump(new_data, outfile)

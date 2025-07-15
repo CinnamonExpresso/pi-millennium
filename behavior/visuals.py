@@ -1,6 +1,6 @@
-from behavior.gui.guiEngine import GUI, FullMenu
+from behavior.gui.guiEngine import GUI, FullMenu, Popup
 from behavior.settings import *
-from behavior.utils.generalUtils import quit_game, reset_menu_state, change_difficulty, update_global_settings_value
+from behavior.utils.generalUtils import quit_game, reset_menu_state, change_difficulty, update_global_settings_value, reset_game_data
 import data.globalvars as globalvars
 from pygame import time
 
@@ -24,6 +24,8 @@ class Visuals:
         self.creditsGui.create_menu_rects("center")
         self.achievementsGui.create_menu_rects("center")
         self.settingsGui.create_menu_rects("top")
+
+        self.rebuild_popupGui()
 
     # Just to handle the back button double click issue
     def back_btn(self):
@@ -52,6 +54,52 @@ class Visuals:
                         text_color = COLORS["WHITE"],
                         font_name=None,
                         font_size=32
+        )
+
+    def close_popup(self):
+        self.popupGuiMain.close_menu()
+        self.settingsGui.open_menu()
+
+    def open_popup(self):
+        self.popupGuiMain.open_menu()
+        print("hi")
+    
+    def rebuild_popupGui(self):
+        self.popupGuiBg = FullMenu(surface=self.surface, menu_header="", menu_state_type="popup", bg_overlay=True)
+        self.popupGuiMain = Popup(surface=self.surface, menu_header="Reset Game?", menu_state_type="popup", bg_overlay=False, menu_background_color=(255,255,255,255), menu_background=True, menu_height=400, menu_width=400, header_color=(0,0,0), rounded_corners=(True, 20))
+        self.popupGuiBg.create_menu_rects("center")
+        self.popupGuiMain.create_menu_rects("center")
+
+        #Popup
+        self.popupGuiMain.create_text(
+            pos = ((self.popupGuiMain.menu_rect.centerx//2)+70,  self.popupGuiMain.menu_rect.top + 60),
+            text_content = "Are you sure you want to reset? All of your progress will be erased",
+            text_color = COLORS["BLACK"],
+            font_name=None,
+            font_size=24
+        )
+
+        self.popupGuiMain.create_btn(
+            pos=((self.popupGuiMain.menu_width//2) + (200//2) - 80,  self.popupGuiMain.menu_rect.top + 290),
+            width = 170,
+            height = 60,
+            text = "Accept",
+            color = COLORS["LIGHT_GREEN"],
+            hover_color = COLORS["GREEN"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=reset_game_data
+        )
+        self.popupGuiMain.create_btn(
+            pos=(self.popupGuiMain.btn_list[0].pos[0] + 190,  self.popupGuiMain.btn_list[0].pos[1]),
+            width = 170,
+            height = 60,
+            text = "Decline",
+            color = COLORS["LIGHT_RED"],
+            hover_color = COLORS["CRIMSON"],
+            text_color = COLORS["BLACK"],
+            border_color=COLORS["BLACK"],
+            funct=self.close_popup
         )
 
     def build_gui(self):
@@ -364,11 +412,10 @@ class Visuals:
             hover_color = COLORS["CRIMSON"],
             text_color = COLORS["BLACK"],
             border_color=COLORS["BLACK"],
-            funct=self.settingsGui.change_tab_state,
-            funct_args_enabled=True,
+            funct=self.open_popup,
+            funct_args_enabled=False,
             is_tab_content=True,
-            tab_content_id=0,
-            funct_args=1
+            tab_content_id=0
         )
 
         #----Audio

@@ -27,7 +27,6 @@ TODO:
 -Maybe some graphical changes
 -Optimize code
 -Translate to c++ and compile to web-asymebly
--Add a reset game button
 """
 
 class PiMemoryGame:
@@ -287,6 +286,10 @@ class PiMemoryGame:
         if globalvars.settings["general"]["debug_mode"]:
             self.visuals.rebuild_debug_gui()
             self.visuals.debugGui.update()
+        
+        if globalvars.menu_state["popup"]:
+            self.visuals.popupGuiBg.update()
+            self.visuals.popupGuiMain.update()
 
         # Draw active toasts
         for i, toast in enumerate(self.toasts):
@@ -360,6 +363,35 @@ def main():
                 game.char_display_interval = 0
             
             globalvars.flags["difficulty_change"] = False
+        #Check if reset flag is active
+        if globalvars.flags["reset_flag"]:
+            #Reset all settings back to default
+            globalvars.settings = {
+                "general": {
+                    "debug_mode": False
+                },
+                "graphics": {
+                    "fps_cap": 60 #fps cap to prevent overloading the system
+                },
+                "audio": {
+                    "music_enabled": True,
+                    "sound_enabled": True,
+                    "music_vol": 0.2,
+                    "sound_vol": 1.0
+                }
+            }
+            globalvars.difficulty = 0
+
+            game.data.reset_data()
+            game = PiMemoryGame() #completely reset the game
+            game.visuals.build_gui()
+            globalvars.achievements = game.data.data["achievements"] #load saved achievement data
+
+            reset_menu_state() #Reset all menu states
+            globalvars.menu_state["mainMenu"] = True
+            globalvars.flags["main"] = True
+            
+            globalvars.flags["reset_flag"] = False
                                    
 if __name__ == "__main__":
     main()
