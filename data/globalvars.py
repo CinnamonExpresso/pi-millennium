@@ -33,7 +33,8 @@ flags = {
     "main": True, #Credits/settings menu accessed from main
     "pause": False, #Credits/settings menu accessed from pause
     "difficulty_change": False, #Checks if the difficulty has been changed recently
-    "reset_flag": False #Flag for completely resetting the game
+    "reset_flag": False, #Flag for completely resetting the game
+    "pause_to_main": False #Flag for returing to main menu from pause screen
 }
 
 cool_down = {

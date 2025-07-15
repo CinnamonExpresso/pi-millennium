@@ -1,8 +1,7 @@
 from behavior.gui.guiEngine import GUI, FullMenu, Popup
 from behavior.settings import *
-from behavior.utils.generalUtils import quit_game, reset_menu_state, change_difficulty, update_global_settings_value, reset_game_data
+from behavior.utils.generalUtils import quit_game, reset_menu_state, change_difficulty, update_global_settings_value, reset_game_data, activate_cooldown, is_web_asm
 import data.globalvars as globalvars
-from pygame import time
 
 class Visuals:
     def __init__(self, screen, btn_cmds):
@@ -31,8 +30,7 @@ class Visuals:
     def back_btn(self):
         reset_menu_state()
         globalvars.menu_state["mainMenu"] = True
-        # Set cooldown for 50ms
-        globalvars.cool_down["inputCooldownUntil"] = time.get_ticks() + 80
+        activate_cooldown()
 
     # Start the game from the main menu gui
     def start_btn(self):
@@ -59,9 +57,11 @@ class Visuals:
     def close_popup(self):
         self.popupGuiMain.close_menu()
         self.settingsGui.open_menu()
+        activate_cooldown()
 
     def open_popup(self):
         self.popupGuiMain.open_menu()
+        activate_cooldown()
     
     def rebuild_popupGui(self):
         self.popupGuiBg = FullMenu(surface=self.surface, menu_header="", menu_state_type="popup", bg_overlay=True)
@@ -100,6 +100,10 @@ class Visuals:
             border_color=COLORS["BLACK"],
             funct=self.close_popup
         )
+
+    def return_to_main_menu(self):
+        globalvars.flags["pause_to_main"] = True
+        activate_cooldown()
 
     def build_gui(self):
         self.achievement_titles()
@@ -149,17 +153,19 @@ class Visuals:
             border_color=COLORS["BLACK"],
             funct=self.settingsGui.open_menu
         )
-        self.mainMenuGui.create_btn(
-            pos=(self.mainMenuGui.btn_list[0].pos[0],  self.mainMenuGui.btn_list[3].pos[1] + 70),
-            width = 480,
-            height = 60,
-            text = "Quit",
-            color = COLORS["WHITE"],
-            hover_color = COLORS["GRAY"],
-            text_color = COLORS["BLACK"],
-            border_color=COLORS["BLACK"],
-            funct=quit_game
-        )
+
+        if not is_web_asm():
+            self.mainMenuGui.create_btn(
+                pos=(self.mainMenuGui.btn_list[0].pos[0],  self.mainMenuGui.btn_list[3].pos[1] + 70),
+                width = 480,
+                height = 60,
+                text = "Quit",
+                color = COLORS["WHITE"],
+                hover_color = COLORS["GRAY"],
+                text_color = COLORS["BLACK"],
+                border_color=COLORS["BLACK"],
+                funct=quit_game
+            )
         #--Achievements gui
         #--row 1
         self.achievementsGui.create_text(
@@ -544,5 +550,5 @@ class Visuals:
             hover_color = COLORS["GRAY"],
             text_color = COLORS["BLACK"],
             border_color=COLORS["BLACK"],
-            funct=quit_game
+            funct=self.return_to_main_menu
         )

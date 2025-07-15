@@ -17,7 +17,7 @@ class GuiBtn:
         self.color = color
         self.hover_color = hover_color
         self.text_color = text_color
-        self.font = pygame.font.SysFont(None, 24)
+        self.font = pygame.font.Font(None, 24)
         self.rect = pygame.Rect(pos[0], pos[1], width, height)
         self.border_color = border_color
         self.border_width = border_width
@@ -132,12 +132,12 @@ class GuiBtn:
         return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
 
 class GuiText:
-    def __init__(self, pos, text_content, text_color=(0,0,0,1), font_size=42, font_name=None, text_attr=None):
+    def __init__(self, pos, text_content, text_color=(0,0,0,1), font_size=42, font_name="./resources/fonts/consolas.ttf", text_attr=None):
         self.text_pos = pos
         self.text_content = text_content
         self.text_color = text_color
         self.font_size = font_size
-        self.font = pygame.font.SysFont(font_name, font_size)
+        self.font = pygame.font.Font(font_name, font_size)
         self.font_name = font_name
         self.text_attr=text_attr #tuple for pairing checkboxes, sliders, etc with text. index 0: type, index 1: the corrasponding index where type is located
 
@@ -159,7 +159,7 @@ class GuiText:
     def change_font(self, font_size:int, font_name:bool|str=None):
         self.font_size = font_size
         self.font_name = font_name
-        self.font = pygame.font.SysFont(self.font_name, self.font_size)
+        self.font = pygame.font.Font(self.font_name, self.font_size)
 
 #For checkboxes
 class GuiCheckbox:
@@ -310,7 +310,7 @@ class GuiSelectionBox:
         self.border_width = border_width
         self.current_index = def_index #represents the starting options
         self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
-        self.font = font or pygame.font.SysFont(None, 32)
+        self.font = font or pygame.font.Font(None, 32)
         self.update_selected_value()
         self.timers = {
             "selection_cooldown": Timer(duration=100) #prevent spam, can be adjust obv
@@ -414,7 +414,7 @@ class GuiInputBox:
         self.font_size = font_size
         self.font_name = font_name
         self.rect = pygame.Rect(pos[0], pos[1], size[0], size[1])
-        self.font = pygame.font.SysFont(font_name, font_size)
+        self.font = pygame.font.Font(font_name, font_size)
         self.text_type = text_type
         self.def_text = def_text
         self.text_input = str(def_text)
@@ -552,7 +552,7 @@ class GuiInputBox:
     def change_font(self, font_size:int, font_name:bool|str=None):
         self.font_size = font_size
         self.font_name = font_name
-        self.font = pygame.font.SysFont(self.font_name, self.font_size)
+        self.font = pygame.font.Font(self.font_name, self.font_size)
     
     def change_blinker(self):
         substring = self.text_input[:self.text_pos]
@@ -581,7 +581,7 @@ class GuiInputBox:
 #Main GUI class for menu management
 class GUI:
     def __init__(self, surface, tabs_enabled=False):
-        self.font = pygame.font.SysFont(None, 42)
+        self.font = pygame.font.Font(None, 42)
         self.btn_list = []
         self.txt_list = []
         self.slider_list = []
@@ -687,7 +687,7 @@ class GUI:
             self.checkbox_list.append(selection_box)
 
     #create text
-    def create_text(self, pos, text_content, font_name, text_color=(0,0,0,1), font_size=42, is_tab_content:bool=False, tab_content_id:int=0, text_attr:tuple[str,int]=None, align:str="center"):
+    def create_text(self, pos, text_content, font_name="./resources/fonts/consolas.ttf", text_color=(0,0,0,1), font_size=42, is_tab_content:bool=False, tab_content_id:int=0, text_attr:tuple[str,int]=None, align:str="center"):
         new_text = GuiText(pos=pos, text_content=text_content, text_color=text_color, font_size=font_size, font_name=font_name, text_attr=text_attr)
         new_text.create_text(align=align)
         

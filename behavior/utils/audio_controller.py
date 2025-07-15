@@ -43,11 +43,16 @@ class MusicManager(AudioManger):
     def __init__(self):
         super().__init__()
         pygame.mixer.init()
-        self.sounds = {
-            "main": pygame.mixer.Sound(
-                "resources/audio/music/main-theme.mp3"
-            )
-        }
+        try:
+            pygame.mixer.init()
+            self.sounds = {
+                "main": pygame.mixer.Sound(
+                    "resources/audio/music/main-theme.ogg"  # changed to wav
+                )
+            }
+        except pygame.error:
+            print("Warning: Audio mixer failed to initialize or load sounds.")
+            self.sounds = {}
 
 
 # Manages all sounds
@@ -55,10 +60,15 @@ class SoundManager(AudioManger):
     def __init__(self):
         super().__init__()
         pygame.mixer.init()
-        self.sounds = {
-            "new_high_score": pygame.mixer.Sound("resources/audio/sound/new_high_score.wav"),
-            "achievement": pygame.mixer.Sound("resources/audio/sound/achievement.wav"),
-        }
+        try:
+            pygame.mixer.init()
+            self.sounds = {
+                "new_high_score": pygame.mixer.Sound("resources/audio/sound/new_high_score.ogg"),
+                "achievement": pygame.mixer.Sound("resources/audio/sound/achievement.ogg"),
+            }
+        except pygame.error:
+            print("Warning: Audio mixer failed to initialize or load sounds.")
+            self.sounds = {}
 
     def play_randomize_sound(self, path: str, limit: int) -> str:
         num: int = randint(1, limit)

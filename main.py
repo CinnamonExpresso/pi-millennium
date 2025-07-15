@@ -1,5 +1,6 @@
 import pygame
 import sys
+import asyncio
 import time
 from behavior.settings import *
 from behavior.utils.audio_controller import MusicManager, SoundManager
@@ -15,9 +16,9 @@ from behavior.utils.timer import Timer, StopWatchTimer
 pygame.init()
 
 # Constants
-FONT = pygame.font.SysFont("consolas", 48)
-INPUT_FONT = pygame.font.SysFont("consolas", 36)
-SUB_FONT = pygame.font.SysFont("consolas", 26)
+FONT = pygame.font.Font("./resources/fonts/consolas.ttf", 48)
+INPUT_FONT = pygame.font.Font("./resources/fonts/consolas.ttf", 36)
+SUB_FONT = pygame.font.Font("./resources/fonts/consolas.ttf", 26)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pi Millennium")
@@ -343,7 +344,7 @@ class PiMemoryGame:
         self.musicManager.set_volume("main", globalvars.settings["audio"]["music_vol"])
         self.soundManager.set_volume("main", globalvars.settings["audio"]["sound_vol"])
 
-def main():
+async def main():
     clock = pygame.time.Clock()
     timers = {
         "debug_stat_update": Timer(100)
@@ -381,6 +382,15 @@ def main():
                 game.char_display_interval = 0
             
             globalvars.flags["difficulty_change"] = False
+        
+        #check if main menu flag is active (the player went from pause to main menu)
+        if globalvars.flags["pause_to_main"]:
+            reset_menu_flags()
+            reset_menu_state()
+            globalvars.menu_state["mainMenu"] = True
+            globalvars.flags["main"] = True
+            game.restart_game()
+
         #Check if reset flag is active
         if globalvars.flags["reset_flag"]:
             #Reset all settings back to default
@@ -409,6 +419,8 @@ def main():
             reset_menu_flags()
             globalvars.menu_state["mainMenu"] = True
             globalvars.flags["main"] = True
+
+        await asyncio.sleep(0)
                                    
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
