@@ -16,6 +16,12 @@ def reset_menu_state():
 
     update_pause_states()
 
+#Resets all menu flags to False
+def reset_menu_flags():
+    if any(globalvars.flags.values()):
+        for flag in globalvars.flags:
+            globalvars.flags[flag] = False
+
 #Update stats on globalvars
 def update_stats(name, amount):
     globalvars.stats[name] += amount #Update stat
@@ -50,7 +56,6 @@ def quit_game():
 def change_difficulty(difficulty=0):
     globalvars.difficulty = difficulty
     globalvars.flags["difficulty_change"] = True
-    print(globalvars.difficulty)
 
 #changes game speed
 def change_game_speed(speed=1):

@@ -62,7 +62,6 @@ class Visuals:
 
     def open_popup(self):
         self.popupGuiMain.open_menu()
-        print("hi")
     
     def rebuild_popupGui(self):
         self.popupGuiBg = FullMenu(surface=self.surface, menu_header="", menu_state_type="popup", bg_overlay=True)

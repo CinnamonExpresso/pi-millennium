@@ -4,11 +4,11 @@ import time
 from behavior.settings import *
 from behavior.utils.audio_controller import MusicManager, SoundManager
 from behavior.utils.save_data import Data
-from behavior.gui.fontEngine import render_text_with_border
+from behavior.gui.fontEngine import render_text_with_border, wrap_text
 from behavior.gui.guiToast import Toast
 from behavior.visuals import Visuals
 import data.globalvars as globalvars
-from behavior.utils.generalUtils import reset_menu_state, update_pause_states, change_game_speed, update_debug_stats, update_timers
+from behavior.utils.generalUtils import reset_menu_state, update_pause_states, change_game_speed, update_debug_stats, update_timers, reset_menu_flags
 from behavior.utils.timer import Timer, StopWatchTimer
 
 # Initialize pygame
@@ -21,13 +21,6 @@ SUB_FONT = pygame.font.SysFont("consolas", 26)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pi Millennium")
-
-"""
-TODO:
--Maybe some graphical changes
--Optimize code
--Translate to c++ and compile to web-asymebly
-"""
 
 class PiMemoryGame:
     def __init__(self):
@@ -205,13 +198,14 @@ class PiMemoryGame:
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE: #pause the game
-                    reset_menu_state()
-                    if not globalvars.flags["main"]:
-                        globalvars.menu_state["pause"] = not globalvars.menu_state["pause"]
-                    else:
-                        globalvars.menu_state["mainMenu"] = True
-                    update_pause_states()
-                    change_game_speed()
+                    if not self.state == "gameover":
+                        reset_menu_state()
+                        if not globalvars.flags["main"]:
+                            globalvars.menu_state["pause"] = not globalvars.menu_state["pause"]
+                        else:
+                            globalvars.menu_state["mainMenu"] = True
+                        update_pause_states()
+                        change_game_speed()
 
         if not any(state for state in globalvars.pause_states) and self.state == "input" and event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:
@@ -232,44 +226,68 @@ class PiMemoryGame:
             if self.state == "show" or self.state == "input":
                 globalvars.flags["main"] = False
 
-                score_text_surf = render_text_with_border(f"Score: {self.score}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(score_text_surf, (10, 10))
+                # Score
+                score_lines = wrap_text(f"Score: {self.score}", SUB_FONT, WIDTH - 20)
+                for i, line in enumerate(score_lines):
+                    score_surf = render_text_with_border(line, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(score_surf, (10, 10 + i * (score_surf.get_height() + 2)))
 
-                high_score_text_surf = render_text_with_border(f"High-Score: {self.high_score}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(high_score_text_surf, (10, score_text_surf.get_height() + 10))
+                # High Score
+                high_score_y = 10 + len(score_lines) * (score_surf.get_height() + 2)
+                high_score_lines = wrap_text(f"High-Score: {self.high_score}", SUB_FONT, WIDTH - 20)
+                for i, line in enumerate(high_score_lines):
+                    high_score_surf = render_text_with_border(line, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(high_score_surf, (10, high_score_y + i * (high_score_surf.get_height() + 2)))
 
+                # Elapsed Time
                 elasped_time_text_surf = render_text_with_border(self.elasped_time_txt, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
                 screen.blit(elasped_time_text_surf, (WIDTH - 120, 10))
 
-            # Show message or sequence
+            # Sequence being shown
             if self.state == "show":
-                text_surf = render_text_with_border(self.animated_seq, FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(text_surf, (WIDTH // 2 - text_surf.get_width() // 2, HEIGHT // 3))
+                seq_lines = wrap_text(self.animated_seq, FONT, WIDTH - 40, is_single_string=True)
+                for i, line in enumerate(seq_lines):
+                    text_surf = render_text_with_border(line, FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(text_surf, (WIDTH // 2 - text_surf.get_width() // 2, HEIGHT // 3 + i * (text_surf.get_height() + 5)))
 
-                msg_surf = render_text_with_border("Memorize the sequence!", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(msg_surf, (WIDTH // 2 - msg_surf.get_width() // 2, HEIGHT // 2))
+                msg_lines = wrap_text("Memorize the sequence!", SUB_FONT, WIDTH - 40)
+                for i, line in enumerate(msg_lines):
+                    msg_surf = render_text_with_border(line, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(msg_surf, (WIDTH // 2 - msg_surf.get_width() // 2, HEIGHT // 2 + i * (msg_surf.get_height() + 5)))
 
             elif self.state == "input":
-                input_surf = render_text_with_border(self.user_input, INPUT_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(input_surf, (WIDTH // 2 - input_surf.get_width() // 2, (HEIGHT // 3)))
+                input_lines = wrap_text(self.user_input, INPUT_FONT, WIDTH - 40)
+                for i, line in enumerate(input_lines):
+                    input_surf = render_text_with_border(line, INPUT_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(input_surf, (WIDTH // 2 - input_surf.get_width() // 2, HEIGHT // 3 + i * (input_surf.get_height() + 5)))
 
-                prompt_surf = render_text_with_border("Type the full sequence", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(prompt_surf, (WIDTH // 2 - prompt_surf.get_width() // 2, HEIGHT // 2))
+                prompt_lines = wrap_text("Type the full sequence", SUB_FONT, WIDTH - 40)
+                for i, line in enumerate(prompt_lines):
+                    prompt_surf = render_text_with_border(line, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(prompt_surf, (WIDTH // 2 - prompt_surf.get_width() // 2, HEIGHT // 2 + i * (prompt_surf.get_height() + 5)))
+
             else:
-                msg_surf = render_text_with_border(self.message, FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                screen.blit(msg_surf, (WIDTH // 2 - msg_surf.get_width() // 2, (HEIGHT // 3)))
-                score_surf = render_text_with_border(f"Score: {self.score}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                # General message (e.g., game over or other)
+                message_lines = wrap_text(self.message, FONT, WIDTH - 40)
+                for i, line in enumerate(message_lines):
+                    msg_surf = render_text_with_border(line, FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(msg_surf, (WIDTH // 2 - msg_surf.get_width() // 2, HEIGHT // 3 + i * (msg_surf.get_height() + 5)))
 
+                # Score again (below message)
+                score_lines = wrap_text(f"Score: {self.score}", SUB_FONT, WIDTH - 40)
+                for i, line in enumerate(score_lines):
+                    score_surf = render_text_with_border(line, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                    screen.blit(score_surf, (WIDTH // 2 - score_surf.get_width() // 2, HEIGHT // 3 + 60 + i * (score_surf.get_height() + 5)))
+
+                # Elapsed time for game over
                 if self.state == "gameover":
-                    elasped_time_text_surf = render_text_with_border(f"Time: {self.elasped_time_txt}", SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
-                    screen.blit(elasped_time_text_surf, ((WIDTH // 2 - elasped_time_text_surf.get_width() // 2), (HEIGHT // 3)+90))
-                    screen.blit(score_surf, ((WIDTH // 2 - elasped_time_text_surf.get_width() // 2), (HEIGHT // 3)+60))
-                else:
-                    screen.blit(score_surf, (WIDTH // 2 - score_surf.get_width() // 2, (HEIGHT // 3)+60))
-
-            #Update gui's
-            if self.state == "gameover":
-                self.visuals.mainGui.update()
+                    elapsed_lines = wrap_text(f"Time: {self.elasped_time_txt}", SUB_FONT, WIDTH - 40)
+                    for i, line in enumerate(elapsed_lines):
+                        elasped_time_text_surf = render_text_with_border(line, SUB_FONT, text_color=TEXT_COLOR, border_color=(48, 48, 48), border_width=2)
+                        screen.blit(elasped_time_text_surf, (WIDTH // 2 - elasped_time_text_surf.get_width() // 2, HEIGHT // 3 + 90 + i * (elasped_time_text_surf.get_height() + 5)))
+        #Update gui's
+        if self.state == "gameover":
+            self.visuals.mainGui.update()
         elif  globalvars.menu_state["pause"]:
             self.visuals.pauseGui.update()
             globalvars.flags["pause"] = True
@@ -384,14 +402,13 @@ def main():
 
             game.data.reset_data()
             game = PiMemoryGame() #completely reset the game
-            game.visuals.build_gui()
             globalvars.achievements = game.data.data["achievements"] #load saved achievement data
+            game.visuals.build_gui()
 
             reset_menu_state() #Reset all menu states
+            reset_menu_flags()
             globalvars.menu_state["mainMenu"] = True
             globalvars.flags["main"] = True
-            
-            globalvars.flags["reset_flag"] = False
                                    
 if __name__ == "__main__":
     main()

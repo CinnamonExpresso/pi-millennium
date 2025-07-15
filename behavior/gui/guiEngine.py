@@ -361,10 +361,8 @@ class GuiSelectionBox:
             self.current_index = (self.current_index + 1) % len(self.options)
         elif click_type == "Right":
             self.current_index = (self.current_index + 1) % len(self.options)
-            print("right")
         elif click_type == "Left":
             self.current_index = (self.current_index - 1) % len(self.options)
-            print("left")
 
         self.update_selected_value()
         self.timers["selection_cooldown"].activate()

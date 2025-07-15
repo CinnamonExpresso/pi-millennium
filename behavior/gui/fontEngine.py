@@ -15,3 +15,32 @@ def render_text_with_border(text, font, text_color, border_color, border_width=2
     # Draw main text in center
     surface.blit(base, (border_width, border_width))
     return surface
+
+#Breaks text into lines
+def wrap_text(text, font, max_width, is_single_string=False):
+    words = text.split(' ')
+    lines = []
+    current_line = ""
+
+    if not is_single_string:
+        for word in words:
+            test_line = current_line + word + " "
+            if font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                lines.append(current_line.strip())
+                current_line = word + " "
+        if current_line:
+            lines.append(current_line.strip())
+    else:
+        for char in text:
+            test_line = current_line + char
+            if font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                lines.append(current_line)
+                current_line = char
+        if current_line:
+            lines.append(current_line)
+
+    return lines
